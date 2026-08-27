@@ -10,6 +10,7 @@ import MockInterview from '@/pages/MockInterview'
 import MockExam from '@/pages/MockExam'
 import BlueBook from '@/pages/BlueBook'
 import Forum from '@/pages/Forum'
+import ForumThread from '@/pages/ForumThread'
 import NotFound from '@/pages/NotFound'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/mock-exam" element={<MockExam />} />
         <Route path="/blue-book" element={<BlueBook />} />
         <Route path="/forum" element={<Forum />} />
+        <Route path="/forum/:postId" element={<ForumThread />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

@@ -377,7 +377,7 @@ export default function Competitions() {
       {/* mobile filters */}
       {filtersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setFiltersOpen(false)} />
+          <div className="absolute inset-0 bg-scrim" onClick={() => setFiltersOpen(false)} />
           <div className="anim-in absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-2xl border-t border-line bg-surface p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Filters</h3>

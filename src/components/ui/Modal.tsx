@@ -33,10 +33,10 @@ export function Modal({
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-scrim backdrop-blur-sm" onClick={onClose} />
       <div
         className={cn(
-          'anim-in relative w-full rounded-2xl border border-line bg-surface shadow-2xl',
+          'anim-in relative w-full rounded-2xl border border-line bg-surface shadow-float',
           wide ? 'max-w-2xl' : 'max-w-md',
         )}
       >

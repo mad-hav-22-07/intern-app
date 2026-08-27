@@ -55,7 +55,7 @@ function read<T>(key: string, fallback: T): T {
 export function AppProvider({ children }: { children: ReactNode }) {
   const [signedIn, setSignedIn] = useState(() => read(KEY, false))
   const [profile, setProfileState] = useState<Profile>(() => read(PROFILE_KEY, DEFAULT_PROFILE))
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => read(THEME_KEY, 'dark' as const))
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => read(THEME_KEY, 'light' as const))
   const [done, setDone] = useState<string[]>(() => read(DONE_KEY, ['r-blind75', 'r-os', 'x-guide']))
   const [saved, setSaved] = useState<string[]>(() => read(CAL_KEY, ['c2', 'c4']))
 

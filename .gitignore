@@ -4,3 +4,11 @@ dist
 .DS_Store
 *.local
 notes/
+
+# env
+.env
+.env.*
+!.env.example
+
+# typescript build artifact
+tsconfig.tsbuildinfo

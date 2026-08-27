@@ -51,7 +51,9 @@ function Session({ round, role, onExit }: { round: Round; role: RoleId; onExit: 
     return () => clearInterval(t)
   }, [ended])
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), [msgs, typing])
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [msgs, typing])
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
   const ss = String(seconds % 60).padStart(2, '0')

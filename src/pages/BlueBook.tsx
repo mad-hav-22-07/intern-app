@@ -127,7 +127,9 @@ function Chatbot() {
   const [typing, setTyping] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), [msgs, typing])
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [msgs, typing])
 
   function ask(q: string) {
     const hit = BLUEBOOK_QA.find((x) => x.q === q)

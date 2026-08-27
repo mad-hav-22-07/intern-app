@@ -156,7 +156,7 @@ export default function Shell() {
       {/* mobile drawer */}
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
+          <div className="absolute inset-0 bg-scrim" onClick={() => setOpen(false)} />
           <aside className="anim-in absolute inset-y-0 left-0 w-72 border-r border-line bg-surface">
             {sidebar}
           </aside>
