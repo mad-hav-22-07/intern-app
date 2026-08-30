@@ -12,3 +12,4 @@ notes/
 
 # typescript build artifact
 tsconfig.tsbuildinfo
+.env*
