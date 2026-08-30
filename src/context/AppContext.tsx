@@ -18,6 +18,8 @@ import {
   type ReactNode,
 } from 'react'
 import { DEFAULT_PROFILE, type Profile } from '@/data/user'
+import * as auth from '@/lib/auth'
+import { setIdentityKey } from '@/lib/identity'
 import type { RoleId } from '@/data/roles'
 import {
   seedActivity,
@@ -33,10 +35,17 @@ const DONE_KEY = 'ipd.done.v1'
 const CAL_KEY = 'ipd.calendar.v1'
 const ACTIVITY_KEY = 'ipd.activity.v1'
 const GOAL_KEY = 'ipd.goal.v1'
+const DAILY_KEY = 'ipd.daily.v1'
 
-/** Prototype credentials. No backend, by design. */
+/**
+ * Demo credentials, used only when Supabase is not configured. With it
+ * configured, `auth.ts` takes over and these stop working.
+ */
 export const DEMO_USER = 'admin'
 export const DEMO_PASS = 'admin123'
+
+/** True when real accounts are available; false in demo mode. */
+export const hasRealAuth = auth.isAuthEnabled
 
 /** What can put a day on the streak. Used as the label in the activity log. */
 export type ActivityKind =
@@ -45,11 +54,14 @@ export type ActivityKind =
   | 'forum'
   | 'mock-interview'
   | 'mock-exam'
+  | 'daily'
   | 'manual'
 
 type Ctx = {
   signedIn: boolean
-  signIn: (u: string, p: string) => { ok: boolean; error?: string }
+  /** Resolves once the session has been restored, so pages never flash the login screen. */
+  authLoading: boolean
+  signIn: (u: string, p: string) => Promise<{ ok: boolean; error?: string }>
   signOut: () => void
 
   profile: Profile
@@ -63,6 +75,10 @@ type Ctx = {
   /** competition ids the user has committed to; the only things on the calendar */
   registered: string[]
   toggleRegistered: (id: string) => void
+
+  /** `role:dayNumber` keys for daily challenges already solved */
+  solvedDaily: string[]
+  markDailySolved: (key: string) => void
 
   /** { 'YYYY-MM-DD': things done that day } */
   activity: Activity
@@ -84,21 +100,58 @@ function read<T>(key: string, fallback: T): T {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [signedIn, setSignedIn] = useState(() => read(KEY, false))
+  // In demo mode the flag is the whole session. With real auth, Supabase owns the
+  // session and this is just a mirror of it.
+  const [signedIn, setSignedIn] = useState(() => (auth.isAuthEnabled ? false : read(KEY, false)))
+  const [authLoading, setAuthLoading] = useState(auth.isAuthEnabled)
   const [profile, setProfileState] = useState<Profile>(() => read(PROFILE_KEY, DEFAULT_PROFILE))
   const [done, setDone] = useState<string[]>(() => read(DONE_KEY, ['r-blind75', 'r-os', 'x-guide']))
   const [registered, setRegistered] = useState<string[]>(() => read(CAL_KEY, ['c2', 'c4']))
   const [activity, setActivity] = useState<Activity>(() => read(ACTIVITY_KEY, seedActivity()))
   const [dailyGoal, setDailyGoalState] = useState<number>(() => read(GOAL_KEY, 3))
+  const [solvedDaily, setSolvedDaily] = useState<string[]>(() => read(DAILY_KEY, []))
 
-  useEffect(() => localStorage.setItem(KEY, JSON.stringify(signedIn)), [signedIn])
+  useEffect(() => {
+    if (!auth.isAuthEnabled) localStorage.setItem(KEY, JSON.stringify(signedIn))
+  }, [signedIn])
+
+  /**
+   * Adopt the Supabase session, and keep following it. The listener also fires on
+   * token refresh and on sign-out from another tab, so this stays in sync without
+   * polling.
+   */
+  useEffect(() => {
+    if (!auth.isAuthEnabled) return
+
+    const adopt = (user: auth.AuthUser | null) => {
+      setIdentityKey(user?.id ?? null)
+      setSignedIn(Boolean(user))
+      if (user) {
+        // The account is the source of truth for identity; everything else the
+        // user edits on the profile page stays local.
+        setProfileState((prev) => ({
+          ...prev,
+          name: user.name || prev.name,
+          email: user.email,
+          rollNo: user.rollNo,
+        }))
+      }
+      setAuthLoading(false)
+    }
+
+    void auth.currentUser().then(adopt)
+    return auth.onAuthChange(adopt)
+  }, [])
   useEffect(() => localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)), [profile])
   useEffect(() => localStorage.setItem(DONE_KEY, JSON.stringify(done)), [done])
   useEffect(() => localStorage.setItem(CAL_KEY, JSON.stringify(registered)), [registered])
   useEffect(() => localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activity)), [activity])
   useEffect(() => localStorage.setItem(GOAL_KEY, JSON.stringify(dailyGoal)), [dailyGoal])
+  useEffect(() => localStorage.setItem(DAILY_KEY, JSON.stringify(solvedDaily)), [solvedDaily])
 
-  const signIn = useCallback((u: string, p: string) => {
+  const signIn = useCallback(async (u: string, p: string) => {
+    if (auth.isAuthEnabled) return auth.signIn(u, p)
+
     if (u.trim() !== DEMO_USER) return { ok: false, error: 'Unknown user. Try the demo account below.' }
     if (p !== DEMO_PASS) return { ok: false, error: 'Incorrect password.' }
     setSignedIn(true)
@@ -118,8 +171,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Ctx>(
     () => ({
       signedIn,
+      authLoading,
       signIn,
-      signOut: () => setSignedIn(false),
+      signOut: () => {
+        if (auth.isAuthEnabled) void auth.signOut()
+        setSignedIn(false)
+      },
       profile,
       setProfile: setProfileState,
       toggleRole: (r) =>
@@ -146,13 +203,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (!had) logActivity('competition')
         setRegistered((prev) => (had ? prev.filter((x) => x !== id) : [...prev, id]))
       },
+      solvedDaily,
+      // Solving is one-way: there is no un-solving a challenge, so unlike the
+      // resource checkboxes this can never take activity back off the log.
+      markDailySolved: (key) => {
+        if (solvedDaily.includes(key)) return
+        logActivity('daily')
+        setSolvedDaily((prev) => [...prev, key])
+      },
       activity,
       logActivity,
       streak,
       dailyGoal,
       setDailyGoal: setDailyGoalState,
     }),
-    [signedIn, signIn, profile, done, registered, activity, logActivity, streak, dailyGoal],
+    [
+      signedIn,
+      authLoading,
+      signIn,
+      profile,
+      done,
+      registered,
+      solvedDaily,
+      activity,
+      logActivity,
+      streak,
+      dailyGoal,
+    ],
   )
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>

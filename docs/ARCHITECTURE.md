@@ -6,6 +6,8 @@ How this codebase is put together, and where to change things.
 - [How the app boots](#how-the-app-boots)
 - [Routes](#routes)
 - [State](#state)
+- [Accounts](#accounts)
+- [Daily challenges](#daily-challenges)
 - [The forum](#the-forum)
 - [Competitions and the live feeds](#competitions-and-the-live-feeds)
 - [Streaks](#streaks)
@@ -26,6 +28,7 @@ How this codebase is put together, and where to change things.
 | Icons | **lucide-react** | One consistent stroke weight across the app. |
 | Font | **Inter** (self-hosted via `@fontsource-variable/inter`) | Closest licensable match to Apple's San Francisco. Real SF is used on Apple devices through `-apple-system`. |
 | Database | **Supabase (Postgres)** | Backs the forum. Optional: without it the forum runs on `localStorage`. |
+| Auth | **Supabase Auth** | Server-side bcrypt hashing, email confirmation, reset tokens and rate limiting, none of which should ever be hand-rolled. Optional, with a labelled demo login as the fallback. |
 
 There is **no backend of our own**. The app is static files plus direct calls to
 Supabase and two public contest APIs.
@@ -49,9 +52,10 @@ index.html
 which is why the sidebar never re-mounts on navigation and page transitions can be
 animated by keying a wrapper on `location.pathname`.
 
-`RequireAuth` in `App.tsx` bounces signed-out visitors to `/login`. "Auth" is a
-hardcoded username/password check in `AppContext` with a boolean in `localStorage`.
-It is a prototype gate, not security.
+`RequireAuth` in `App.tsx` bounces signed-out visitors to `/login`, and waits for
+`authLoading` first: restoring a Supabase session is asynchronous, and redirecting
+before it resolves would throw a signed-in user back to the login page on every
+hard refresh. See [Accounts](#accounts).
 
 ---
 
@@ -59,7 +63,9 @@ It is a prototype gate, not security.
 
 | Path | Component | What it is |
 |---|---|---|
-| `/login` | `pages/Login` | Hardcoded `admin` / `admin123`. Registration and password reset are explained but disabled. |
+| `/login` | `pages/Login` | Sign in, sign up and password reset. Real accounts when Supabase is configured; a hardcoded demo login otherwise. |
+| `/reset-password` | `pages/ResetPassword` | Where the emailed recovery link lands. Outside the auth gate, since the user is mid-reset. |
+| `/daily` | `pages/Daily` | Today's challenge for each target profile, chosen from the date so everyone on a profile gets the same one. |
 | `/` | `pages/Dashboard` | The prep track for the currently selected target role: curated material with check-offs, progress, next deadline. |
 | `/profile` | `pages/Profile` | Details, target roles, the activity heatmap and streak, per-track progress, milestones, and the (scripted) resume review. |
 | `/friends` | `pages/Friends` | Leaderboard and challenges over mock data. |
@@ -91,12 +97,71 @@ to `localStorage` so a refresh loses nothing. There is no server-side user recor
 | `ipd.calendar.v1` | ids of competitions the user committed to |
 | `ipd.activity.v1` | `{ 'YYYY-MM-DD': things done that day }`, which drives the streak |
 | `ipd.goal.v1` | the daily goal |
+| `ipd.daily.v1` | `role:dayNumber` keys for daily challenges already solved |
 | `ipd.identity.v1` | a per-browser UUID used as the forum's `author_key` |
 | `ipd.forum.*` | the forum's local-mode tables (see below) |
 | `ipd.contests.*` | 15-minute cache of the live feeds (in `sessionStorage`) |
 
 Page-local state (filters, open modals, drafts) stays in the page with `useState`.
 Only things two pages both need are promoted to the context.
+
+---
+
+## Accounts
+
+Two modes, decided by whether `VITE_SUPABASE_*` are set.
+
+**Demo mode** (no database): one hardcoded username and password, a boolean in
+`localStorage`. The login page says so on screen. It exists so a fresh clone runs;
+it is not for real student data.
+
+**Real accounts** (Supabase Auth): passwords hashed server-side with bcrypt, email
+confirmation required before the account works, reset tokens emailed to the
+registered address, and rate limiting, all handled by Supabase rather than by us.
+
+On top of that, `0003_accounts.sql` adds the two rules specific to this platform,
+as **triggers on `auth.users`** so they hold regardless of how signup was called:
+
+| Rule | How it is enforced |
+|---|---|
+| Only `@smail.iitm.ac.in` may sign up | `enforce_institute_email` trigger, before insert |
+| One account per roll number | roll derived from the email local part, `unique` on `profiles.roll_no`, checked in `handle_new_user` inside the signup transaction |
+| A user can only read or edit their own profile | RLS policies keyed on `auth.uid()` |
+| Identity columns cannot be edited | `freeze_profile_identity` trigger restores `id`, `email`, `roll_no` on update |
+| A forum post cannot claim another user's identity | `forum_author_matches_session` trigger compares `author_key` to `auth.uid()` |
+
+The client-side checks in `lib/auth.ts` (domain, password rules) exist to give the
+form fast feedback. **They are not the boundary** and are trivially bypassed by
+calling the API directly, which is exactly why each has a server-side counterpart.
+
+Two deliberate choices worth not "fixing":
+
+- Signup and password reset both report success even when the address is not
+  registered. Saying "no account with that email" would turn either form into a
+  way to enumerate who has an account.
+- The roll number is derived from the email rather than typed, so nobody can claim
+  someone else's.
+
+Three settings still have to be enabled in the Supabase dashboard, because SQL
+cannot set them: **Confirm email**, **leaked password protection**, and the **Site
+URL / redirect allow-list** (otherwise confirmation links point at localhost). They
+are listed at the bottom of `0003_accounts.sql`.
+
+---
+
+## Daily challenges
+
+`data/daily.ts` holds a bank per role; `lib/daily.ts` picks one from the date
+alone, so every student on a profile sees the same question on the same day and it
+rolls over at local midnight. No backend, and it works offline.
+
+Each role gets the question shape its interviews actually use: coding and concept
+questions for SDE and AI/ML, probability and brainteasers for Quant, a guesstimate
+for Consulting, and timed multiple-choice aptitude sets for FMCG and Finance.
+
+Aptitude sets mark themselves solved once every question has been attempted;
+open-ended ones need the user to say they worked through it. Either way it counts
+toward the day's streak.
 
 ---
 
@@ -236,6 +301,8 @@ for hover, and `skeleton` for loading. All of it is disabled under
 | Change the placement data | `src/data/bluebook.ts` |
 | Change mock exam / interview content | `src/data/exams.ts`, `src/data/interviews.ts` |
 | Change what counts toward a streak | calls to `logActivity()` (see `AppContext`) |
+| Add or edit daily challenges | `src/data/daily.ts`, one array per role |
+| Change the account rules | `supabase/migrations/0003_accounts.sql` for the real ones, `src/lib/auth.ts` for the form's feedback |
 | Add a page | a component in `src/pages/`, a `<Route>` in `App.tsx`, an entry in `NAV` and `TITLES` in `Shell.tsx` |
 | Mark something as not built yet | link it to `comingSoon('Name of the thing', '/where-back-goes')` |
 | Change the forum's rules | `supabase/migrations/` for the server rules, `src/lib/forumLocal.ts` to keep local mode matching |

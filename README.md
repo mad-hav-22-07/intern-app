@@ -34,8 +34,14 @@ full-text search, filters kept in the URL, and live updates across browsers.
 **Live over the network:** upcoming Codeforces rounds and LeetCode contests. Both
 are cached for 15 minutes and fall back cleanly when a source is down.
 
-**Real, but stored only in this browser:** login, profile editing, target roles,
-resource check-offs, the streak and activity heatmap, the competition calendar plus
+**Real accounts, when Supabase is connected:** sign-up restricted to
+`@smail.iitm.ac.in`, email confirmation before the account works, one account per
+address and per roll number, and password reset by emailed link. Without Supabase
+the login falls back to a labelled demo account.
+
+**Real, but stored only in this browser:** profile editing, target roles,
+resource check-offs, the daily challenge per profile, the streak and activity
+heatmap, the competition calendar plus
 genuine `.ics` and Google Calendar export, Blue Book filters, the mock exam timer and
 scoring, and the friends leaderboard.
 
@@ -94,9 +100,10 @@ vercel env add VITE_SUPABASE_ANON_KEY
 > These are inlined at **build** time, so add them *before* deploying, or redeploy
 > afterwards. Setting them does not change a build that already shipped.
 
-Then apply `supabase/migrations/0001_forum.sql` and `0002_forum_edit_delete.sql` in
-the Supabase SQL editor. Both are idempotent, so re-running them is safe. Optionally
-load the example threads:
+Then apply the three migrations in `supabase/migrations/` in order in the Supabase
+SQL editor. All are idempotent, so re-running them is safe. `0003_accounts.sql`
+also lists three dashboard settings that SQL cannot set and that you must turn on
+before accounts are safe to use. Optionally load the example threads:
 
 ```bash
 npm run db:seed

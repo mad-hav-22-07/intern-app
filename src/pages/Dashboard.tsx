@@ -24,6 +24,7 @@ import {
   ArrowUpRight,
   Settings2,
   Building2,
+  Zap,
 } from 'lucide-react'
 import { Card, CardHead } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -32,6 +33,8 @@ import { Progress } from '@/components/ui/Progress'
 import { EmptyState, SectionTitle } from '@/components/ui/Page'
 import { useApp } from '@/context/AppContext'
 import { COMMON_SECTION, ROLE_MAP, type ResourceKind, type RoleId } from '@/data/roles'
+import { KIND_LABEL } from '@/data/daily'
+import { dailyFor, solveKey } from '@/lib/daily'
 import { RESUME_REVIEW } from '@/data/user'
 import { daysUntil, relativeLabel } from '@/data/competitions'
 import { useContests } from '@/hooks/useContests'
@@ -181,7 +184,7 @@ function ResourceRow({
 }
 
 export default function Dashboard() {
-  const { profile, done, streak, dailyGoal } = useApp()
+  const { profile, done, streak, dailyGoal, solvedDaily } = useApp()
   const { all: competitions } = useContests()
   const roles = profile.targetRoles
   const [active, setActive] = useState<RoleId | null>(roles[0] ?? null)
@@ -198,6 +201,10 @@ export default function Dashboard() {
     const completed = all.filter((r) => done.includes(r.id)).length
     return { total: all.length, completed, pct: all.length ? (completed / all.length) * 100 : 0 }
   }, [role, done])
+
+  // Today's challenge for whichever profile is selected above.
+  const today = useMemo(() => (active ? dailyFor(active) : null), [active])
+  const todayDone = active ? solvedDaily.includes(solveKey(active)) : false
 
   const upcoming = useMemo(
     () =>
@@ -380,6 +387,34 @@ export default function Dashboard() {
               )}
             </div>
           </Card>
+
+          {today && (
+            <Card hover className="overflow-hidden border-accent/25">
+              <Link to="/daily" className="block">
+                <div className="flex items-center justify-between gap-3 border-b border-line bg-accent-soft/50 px-5 py-3">
+                  <span className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-accent">
+                    <Zap className="size-3.5" /> {KIND_LABEL[today.kind]}
+                  </span>
+                  {todayDone ? (
+                    <Badge tone="accent">
+                      <Check className="size-3" /> Done
+                    </Badge>
+                  ) : (
+                    <Badge tone="neutral">{today.difficulty}</Badge>
+                  )}
+                </div>
+                <div className="p-5">
+                  <p className="text-sm font-medium leading-snug">{today.title}</p>
+                  <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted">
+                    {today.prompt}
+                  </p>
+                  <p className="mt-3 text-[11px] font-medium text-accent">
+                    {todayDone ? 'Review it' : 'Solve today\u2019s'} \u2192
+                  </p>
+                </div>
+              </Link>
+            </Card>
+          )}
 
           <Card className="border-accent/25 bg-accent-soft/30">
             <CardHead title="Weekly challenge" icon={<Flame className="size-4" />} />

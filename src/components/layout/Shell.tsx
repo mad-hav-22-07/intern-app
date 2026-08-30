@@ -14,6 +14,7 @@ import {
   X,
   Flame,
   Rocket,
+  Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useApp } from '@/context/AppContext'
@@ -23,6 +24,7 @@ import { Button } from '@/components/ui/Button'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/daily', label: "Today's Challenge", icon: Zap },
   { to: '/profile', label: 'Profile', icon: UserRound },
   { to: '/friends', label: 'Friends', icon: Users },
   { to: '/competitions', label: 'Competitions', icon: Trophy },
@@ -34,6 +36,7 @@ const NAV = [
 
 const TITLES: Record<string, string> = {
   '/': 'Dashboard',
+  '/daily': "Today's Challenge",
   '/profile': 'Profile',
   '/friends': 'Friends',
   '/competitions': 'Competitions',
