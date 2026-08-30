@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn'
 const URL_RE = /(https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]])/g
 
 /**
- * Post and comment bodies are plain text — no markdown, on purpose, because the
+ * Post and comment bodies are plain text, with no markdown, on purpose, because the
  * compose box has no preview. Line breaks are preserved and bare URLs become
  * links, which covers what people actually paste into a prep forum.
  */

@@ -1,3 +1,10 @@
+/**
+ * A round-by-round mock interview.
+ *
+ * The interviewer follows a fixed script per role and the feedback report is
+ * pre-written. The session flow, timer and transcript are real, and completing a
+ * round counts toward the day's streak.
+ */
 import { useEffect, useRef, useState } from 'react'
 import {
   Mic,
@@ -25,15 +32,16 @@ import { ROUNDS, FEEDBACK, type Round } from '@/data/interviews'
 import { RESUME_REVIEW } from '@/data/user'
 import { cn } from '@/lib/cn'
 import { Link } from 'react-router-dom'
+import { comingSoon } from '@/lib/comingSoon'
 
 type Msg = { from: 'bot' | 'me'; text: string }
 
 function Session({ round, role, onExit }: { round: Round; role: RoleId; onExit: () => void }) {
-  const { profile } = useApp()
+  const { profile, logActivity } = useApp()
   const [msgs, setMsgs] = useState<Msg[]>([
     {
       from: 'bot',
-      text: `Hi ${profile.name.split(' ')[0]}, thanks for making the time. I've read your resume — ${RESUME_REVIEW.fileName}. This is a ${round.minutes}-minute ${round.label.toLowerCase()} for a ${ROLE_MAP[role].label} internship. Ready when you are.`,
+      text: `Hi ${profile.name.split(' ')[0]}, thanks for making the time. I've read your resume, ${RESUME_REVIEW.fileName}. This is a ${round.minutes}-minute ${round.label.toLowerCase()} for a ${ROLE_MAP[role].label} internship. Ready when you are.`,
     },
     { from: 'bot', text: round.script[0].q },
   ])
@@ -80,9 +88,10 @@ function Session({ round, role, onExit }: { round: Round; role: RoleId; onExit: 
         setMsgs((m) => [...m, { from: 'bot', text: round.script[next].q }])
       } else {
         setEnded(true)
+        logActivity('mock-interview')
         setMsgs((m) => [
           ...m,
-          { from: 'bot', text: "That's all from me. Thanks — I'm generating your feedback now." },
+          { from: 'bot', text: "That's all from me. Thanks. I'm generating your feedback now." },
         ])
       }
     }, 1100)
@@ -114,7 +123,7 @@ function Session({ round, role, onExit }: { round: Round; role: RoleId; onExit: 
                 <div key={m.label}>
                   <div className="mb-1 flex items-baseline justify-between">
                     <span className="text-[13px] font-medium">{m.label}</span>
-                    <span className="font-mono text-xs text-muted">{m.value}</span>
+                    <span className="tabular-nums text-xs text-muted">{m.value}</span>
                   </div>
                   <Progress value={m.value} />
                 </div>
@@ -150,7 +159,9 @@ function Session({ round, role, onExit }: { round: Round; role: RoleId; onExit: 
 
         <div className="flex flex-wrap gap-2">
           <Button variant="primary" onClick={onExit}><RotateCcw className="size-4" /> Try another round</Button>
-          <Button variant="secondary"><FileText className="size-4" /> Download transcript</Button>
+          <Link to={comingSoon('Transcript download', '/mock-interview')}>
+            <Button variant="secondary"><FileText className="size-4" /> Download transcript</Button>
+          </Link>
         </div>
       </div>
     )
@@ -168,7 +179,7 @@ function Session({ round, role, onExit }: { round: Round; role: RoleId; onExit: 
           </Badge>
           <div className="flex items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 py-1.5">
             <Clock className="size-3.5 text-accent" />
-            <span className="font-mono text-sm">{mm}:{ss}</span>
+            <span className="tabular-nums text-sm">{mm}:{ss}</span>
           </div>
         </div>
       </div>
@@ -221,7 +232,7 @@ function Session({ round, role, onExit }: { round: Round; role: RoleId; onExit: 
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && answer()}
-              placeholder="Type your answer — think out loud, the way you would speak it."
+              placeholder="Type your answer. Think out loud, the way you would speak it."
               autoFocus
             />
             <Button variant="primary" onClick={answer} disabled={!input.trim()}>
@@ -250,7 +261,7 @@ function Session({ round, role, onExit }: { round: Round; role: RoleId; onExit: 
               <li>· State your approach before you start writing.</li>
               <li>· Volunteer time and space complexity without being asked.</li>
               <li>· Say the edge cases out loud even if you skip coding them.</li>
-              <li>· Narrate dead ends — silence reads as being stuck.</li>
+              <li>· Narrate dead ends. Silence reads as being stuck.</li>
             </ul>
           </Card>
         </div>
@@ -276,7 +287,7 @@ export default function MockInterview() {
         <EmptyState
           icon={<Mic className="size-6" />}
           title="Pick a target profile first"
-          sub="Interview rounds are role-specific — an SDE loop looks nothing like a consulting one."
+          sub="Interview rounds are role-specific. An SDE loop looks nothing like a consulting one."
           action={<Link to="/profile"><Button variant="primary">Go to profile</Button></Link>}
         />
       </>
@@ -321,7 +332,7 @@ export default function MockInterview() {
             ROUNDS[role].map((r, i) => (
               <Card key={r.id} hover className="flex flex-col p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <span className="grid size-9 place-items-center rounded-xl bg-accent-soft font-mono text-xs font-semibold text-accent">
+                  <span className="grid size-9 place-items-center rounded-xl bg-accent-soft tabular-nums text-xs font-semibold text-accent">
                     {i + 1}
                   </span>
                   <Badge tone="neutral"><Clock className="size-3" /> {r.minutes} min</Badge>
@@ -343,9 +354,9 @@ export default function MockInterview() {
         <CardHead title="How the real version works" icon={<Sparkles className="size-4" />} />
         <div className="grid gap-4 p-5 pt-3.5 sm:grid-cols-3">
           {[
-            { t: 'Reads your resume', b: 'Questions are generated from your actual projects, not a generic bank — so you have to defend what you wrote.' },
+            { t: 'Reads your resume', b: 'Questions are generated from your actual projects, not a generic bank, so you have to defend what you wrote.' },
             { t: 'Runs the real loop', b: 'Round structure mirrors what the Blue Book says that company actually ran last season.' },
-            { t: 'Scores and explains', b: 'Correctness, communication, pace and structure — each with the specific moment that cost you.' },
+            { t: 'Scores and explains', b: 'Correctness, communication, pace and structure, each with the specific moment that cost you.' },
           ].map((x) => (
             <div key={x.t}>
               <p className="text-[13px] font-medium">{x.t}</p>

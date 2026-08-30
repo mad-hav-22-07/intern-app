@@ -1,3 +1,10 @@
+/**
+ * One thread: the post, its comment tree, and the composer.
+ *
+ * Ownership decides what is on screen. The author of the post gets edit and delete
+ * and, on a Question, the ability to accept an answer; everyone else gets Report.
+ * The backend enforces the same rules, so this is presentation, not security.
+ */
 import { useCallback, useState, type KeyboardEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Check, Link2, MessageCircle, Send, ShieldAlert } from 'lucide-react'
@@ -123,7 +130,7 @@ export default function ForumThread() {
       setCopied(true)
       setTimeout(() => setCopied(false), 1600)
     } catch {
-      /* clipboard blocked — the URL bar still has the link */
+      /* clipboard blocked, and the URL bar still has the link */
     }
   }
 
@@ -222,7 +229,7 @@ export default function ForumThread() {
           <ShieldAlert className="mt-0.5 size-4.5 shrink-0 text-danger" />
           <div>
             <p className="text-sm font-medium text-danger">
-              Flagged by {post.reportCount} {post.reportCount === 1 ? 'user' : 'users'} — under
+              Flagged by {post.reportCount} {post.reportCount === 1 ? 'user' : 'users'}, now under
               moderation
             </p>
             <p className="mt-1 text-xs leading-relaxed text-muted">
@@ -320,7 +327,7 @@ export default function ForumThread() {
                 onKeyDown={onDraftKey}
                 aria-invalid={overLimit}
                 aria-label="Add a comment"
-                placeholder="Add to the discussion — interview experiences help the next batch most."
+                placeholder="Add to the discussion. Interview experiences help the next batch most."
               />
               {postError && <p className="mt-1.5 text-[11px] text-danger">{postError}</p>}
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
@@ -328,7 +335,7 @@ export default function ForumThread() {
                 <div className="flex items-center gap-2">
                   <span
                     className={cn(
-                      'font-mono text-[11px]',
+                      'tabular-nums text-[11px]',
                       overLimit ? 'text-danger' : 'text-muted/70',
                     )}
                   >

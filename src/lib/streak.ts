@@ -1,7 +1,7 @@
 /**
  * Streak maths over a plain `{ 'YYYY-MM-DD': count }` map.
  *
- * A day is "active" if anything at all was logged on it — ticking off material,
+ * A day is "active" if anything at all was logged on it: ticking off material,
  * finishing a mock round, adding a competition. `goal` only drives today's
  * progress bar; it is deliberately not a condition for keeping the streak, so a
  * light day does not wipe out three weeks of work.
@@ -11,7 +11,7 @@ export type Activity = Record<string, number>
 
 const DAY = 86_400_000
 
-export function dayKey(d: Date): string {
+function dayKey(d: Date): string {
   const y = d.getFullYear()
   const m = `${d.getMonth() + 1}`.padStart(2, '0')
   const day = `${d.getDate()}`.padStart(2, '0')
@@ -23,7 +23,7 @@ export function todayKey(): string {
 }
 
 /** Local midnight `n` days before today. */
-export function daysAgo(n: number): Date {
+function daysAgo(n: number): Date {
   const d = new Date()
   d.setHours(0, 0, 0, 0)
   d.setTime(d.getTime() - n * DAY)
@@ -43,7 +43,7 @@ export function streakStats(activity: Activity): StreakStats {
   const active = new Set(Object.keys(activity).filter((k) => (activity[k] ?? 0) > 0))
 
   // Current streak: walk back from today. Today not being logged yet is not a
-  // break — the day is still in progress — so start counting at yesterday.
+  // break, since the day is still in progress, so start counting at yesterday.
   let current = 0
   const start = active.has(todayKey()) ? 0 : 1
   for (let i = start; ; i++) {
@@ -74,7 +74,7 @@ export function streakStats(activity: Activity): StreakStats {
 
 export type HeatCell = { key: string; date: Date; count: number; future: boolean }
 
-/** The last `days` days, oldest first — the row the heatmap renders. */
+/** The last `days` days, oldest first. This is the row the heatmap renders. */
 export function heatmap(activity: Activity, days: number): HeatCell[] {
   const out: HeatCell[] = []
   for (let i = days - 1; i >= 0; i--) {
@@ -118,7 +118,7 @@ export function intensity(count: number, goal: number): 0 | 1 | 2 | 3 {
 
 /**
  * First-run history so a brand-new browser does not show an empty wall. Seeded
- * once, then never touched again — real activity is appended on top of it.
+ * once, then never touched again. Real activity is appended on top of it.
  */
 export function seedActivity(): Activity {
   const pattern = [

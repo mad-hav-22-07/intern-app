@@ -32,14 +32,14 @@ export type Role = {
   id: RoleId
   label: string
   tagline: string
-  /** companies juniors will recognise — purely illustrative */
+  /** companies juniors will recognise; purely illustrative */
   companies: string[]
   sections: Section[]
 }
 
 /**
  * Placeholder curriculum transcribed from the handwritten plan (notes/IMG_1002-1003).
- * Links are intentionally left empty where the real material has not been collected yet —
+ * Links are intentionally left empty where the real material has not been collected yet.
  * the UI renders those as un-linked entries instead of dead links.
  */
 export const ROLES: Role[] = [
@@ -195,7 +195,7 @@ export const ROLES: Role[] = [
       {
         id: 'fin-proj',
         title: 'Projects',
-        hint: 'Mined from past shortlisted resumes — these are the ones that got calls.',
+        hint: 'Mined from past shortlisted resumes. These are the ones that got calls.',
         resources: [
           { id: 'f-p1', title: 'Portfolio optimisation & backtesting', kind: 'project', effort: '3 weeks' },
           { id: 'f-p2', title: 'Equity research report on one listed company', kind: 'project', effort: '2 weeks' },
@@ -279,7 +279,7 @@ export const ROLES: Role[] = [
       {
         id: 'core-dept',
         title: 'Department-specific material',
-        hint: 'Curated per branch — CS, EE, ME, CH, CE, AE, MM, BT.',
+        hint: 'Curated per branch: CS, EE, ME, CH, CE, AE, MM, BT.',
         resources: [
           { id: 'k-dept', title: 'Core subject revision sheets', kind: 'sheet', effort: '6 weeks' },
           { id: 'k-past', title: 'Past core interview questions by department', kind: 'sheet', effort: '2 weeks' },
@@ -297,11 +297,11 @@ export const ROLES: Role[] = [
   },
 ]
 
-/** Shared across every role — the notes call for basic interview guidelines for everyone. */
+/** Shared across every role. The notes call for basic interview guidelines for everyone. */
 export const COMMON_SECTION: Section = {
   id: 'common',
   title: 'For every role',
-  hint: 'Shared material — applies no matter which profile you target.',
+  hint: 'Shared material. Applies no matter which profile you target.',
   resources: [
     { id: 'x-guide', title: 'Basic interview guidelines', kind: 'doc', note: 'Structure, STAR answers, what not to say.', effort: '1 day' },
     { id: 'x-sl', title: 'Shortlisting & CDC process explained', kind: 'doc', note: 'How slots, day-wise ordering and PPOs actually work.', effort: '1 day' },
@@ -311,4 +311,3 @@ export const COMMON_SECTION: Section = {
 }
 
 export const ROLE_MAP = Object.fromEntries(ROLES.map((r) => [r.id, r])) as Record<RoleId, Role>
-export const ROLE_LABEL = (id: RoleId) => ROLE_MAP[id]?.label ?? id

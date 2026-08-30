@@ -1,3 +1,9 @@
+/**
+ * The route table.
+ *
+ * Everything except `/login` renders inside `Shell`, so the sidebar and header are
+ * mounted once and survive navigation. `RequireAuth` gates that whole branch.
+ */
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useApp } from '@/context/AppContext'
 import Shell from '@/components/layout/Shell'
@@ -10,6 +16,7 @@ import MockInterview from '@/pages/MockInterview'
 import MockExam from '@/pages/MockExam'
 import BlueBook from '@/pages/BlueBook'
 import Forum from '@/pages/Forum'
+import ComingSoon from '@/pages/ComingSoon'
 import ForumThread from '@/pages/ForumThread'
 import NotFound from '@/pages/NotFound'
 
@@ -41,6 +48,7 @@ export default function App() {
         <Route path="/blue-book" element={<BlueBook />} />
         <Route path="/forum" element={<Forum />} />
         <Route path="/forum/:postId" element={<ForumThread />} />
+        <Route path="/coming-soon" element={<ComingSoon />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

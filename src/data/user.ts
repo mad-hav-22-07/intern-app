@@ -56,7 +56,7 @@ export const RESUME_REVIEW = {
     {
       severity: 'medium' as const,
       title: 'Lead with the outcome, not the tool',
-      body: 'Three bullets open with "Used React to...". Interviewers scan the first four words — put the result there and the stack at the end.',
+      body: 'Three bullets open with "Used React to...". Interviewers scan the first four words, so put the result there and the stack at the end.',
     },
     {
       severity: 'low' as const,

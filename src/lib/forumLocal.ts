@@ -22,7 +22,7 @@ import { hotScore, hoursSince } from '@/lib/time'
  * seed threads are stored as deltas against them.
  *
  * Because seed rows carry `authorKey: 'seed'`, anything the viewer can edit or
- * delete is by definition one of their own persisted rows — no delta bookkeeping
+ * delete is by definition one of their own persisted rows, so no delta bookkeeping
  * is needed for those two operations.
  */
 
@@ -47,7 +47,7 @@ function write(key: string, value: unknown) {
   try {
     localStorage.setItem(key, JSON.stringify(value))
   } catch {
-    /* storage full or disabled — the session just won't persist */
+    /* storage full or disabled, so the session just won't persist */
   }
 }
 

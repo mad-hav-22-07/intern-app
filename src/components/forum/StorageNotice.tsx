@@ -11,7 +11,7 @@ export function StorageNotice() {
     return (
       <p className="flex items-center gap-1.5 text-[11px] text-muted">
         <Database className="size-3.5 text-accent" />
-        Live — posts are shared with the batch in real time.
+        Live. Posts are shared with the batch in real time.
       </p>
     )
   }
@@ -21,7 +21,7 @@ export function StorageNotice() {
       <div>
         <p className="text-[11px] font-medium text-warn">Saved to this browser only</p>
         <p className="mt-1 text-[11px] leading-relaxed text-muted">
-          Posting, replying, voting and editing all work — but no database is connected yet, so
+          Posting, replying, voting and editing all work, but no database is connected yet, so
           nobody else can see any of it.
         </p>
       </div>

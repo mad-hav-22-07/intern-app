@@ -22,7 +22,7 @@ export function timeAgo(iso: string): string {
   })
 }
 
-/** Hours elapsed since `iso` — drives the Today / Past week tabs. */
+/** Hours elapsed since `iso`. Drives the Today / Past week tabs. */
 export function hoursSince(iso: string): number {
   const then = new Date(iso).getTime()
   if (Number.isNaN(then)) return Number.POSITIVE_INFINITY

@@ -17,7 +17,7 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
     })
   : null
 
-/** Narrowing helper — throws rather than returning a null client. */
+/** Narrowing helper. Throws rather than returning a null client. */
 export function requireSupabase(): SupabaseClient {
   if (!supabase) {
     throw new Error(

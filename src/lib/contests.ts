@@ -5,7 +5,7 @@ import type { Competition } from '@/data/competitions'
  *
  * Codeforces publishes a first-party JSON API with permissive CORS, so that one
  * is read directly. LeetCode has no public REST endpoint, so a community mirror
- * is tried first and a computed schedule fills in when it is unreachable —
+ * is tried first and a computed schedule fills in when it is unreachable.
  * LeetCode's cadence is fixed (Weekly every Sunday 08:00 IST, Biweekly every
  * second Saturday 20:00 IST), so the fallback is accurate rather than fake.
  *
@@ -16,7 +16,7 @@ import type { Competition } from '@/data/competitions'
 const CACHE_TTL_MS = 15 * 60_000
 const TIMEOUT_MS = 8_000
 
-export type FeedId = 'codeforces' | 'leetcode'
+type FeedId = 'codeforces' | 'leetcode'
 
 export type FeedResult = {
   id: FeedId
@@ -48,7 +48,7 @@ function writeCache(id: FeedId, items: Competition[]) {
   try {
     sessionStorage.setItem(cacheKey(id), JSON.stringify({ at: Date.now(), items }))
   } catch {
-    /* private mode — just refetch next time */
+    /* private mode, so just refetch next time */
   }
 }
 
@@ -79,7 +79,7 @@ function cfRoles(name: string): Competition['roles'] {
   return /div\.?\s*1/i.test(name) ? ['sde', 'quant'] : ['sde']
 }
 
-export async function fetchCodeforces(): Promise<FeedResult> {
+async function fetchCodeforces(): Promise<FeedResult> {
   const cached = readCache('codeforces')
   if (cached) return { id: 'codeforces', label: 'Codeforces', items: cached, status: 'live' }
 
@@ -163,7 +163,7 @@ function lcSeries(
   })
 }
 
-/** The schedule LeetCode has run on for years — used when the mirror is down. */
+/** The schedule LeetCode has run on for years. Used when the mirror is down. */
 function leetcodeComputed(): Competition[] {
   return [
     ...lcSeries(LC_WEEKLY_ANCHOR, 7, 'Weekly', 4),
@@ -175,7 +175,7 @@ type LcResponse = {
   data?: { topTwoContests?: { title: string; startTime: number; duration: number }[] }
 }
 
-export async function fetchLeetCode(): Promise<FeedResult> {
+async function fetchLeetCode(): Promise<FeedResult> {
   const cached = readCache('leetcode')
   if (cached?.length) return { id: 'leetcode', label: 'LeetCode', items: cached, status: 'live' }
 

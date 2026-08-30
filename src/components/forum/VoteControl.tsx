@@ -27,7 +27,7 @@ export function VoteControl({
         aria-label="Upvote"
         aria-pressed={myVote === 1}
         className={cn(
-          'rounded-md p-0.5 transition-all duration-150 hover:bg-accent-soft active:scale-90',
+          'rounded-md p-1.5 sm:p-0.5 transition-all duration-150 hover:bg-accent-soft active:scale-90',
           'disabled:pointer-events-none disabled:opacity-40',
           myVote === 1 ? 'text-accent' : 'text-muted hover:text-accent',
         )}
@@ -38,7 +38,7 @@ export function VoteControl({
       <span
         key={score}
         className={cn(
-          'min-w-8 text-center font-mono text-xs font-medium tabular-nums transition-colors',
+          'min-w-8 text-center tabular-nums text-xs font-medium transition-colors',
           myVote === 1 && 'text-accent',
           myVote === -1 && 'text-danger',
         )}
@@ -53,7 +53,7 @@ export function VoteControl({
         aria-label="Downvote"
         aria-pressed={myVote === -1}
         className={cn(
-          'rounded-md p-0.5 transition-all duration-150 hover:bg-danger/8 active:scale-90',
+          'rounded-md p-1.5 sm:p-0.5 transition-all duration-150 hover:bg-danger/8 active:scale-90',
           'disabled:pointer-events-none disabled:opacity-40',
           myVote === -1 ? 'text-danger' : 'text-muted hover:text-danger',
         )}

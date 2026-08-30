@@ -41,22 +41,19 @@ const TITLES: Record<string, string> = {
   '/mock-exam': 'Mock Exam',
   '/blue-book': 'Blue Book Analysis',
   '/forum': 'Forum',
+  '/coming-soon': 'Being built',
 }
 
-export function Logo({ compact }: { compact?: boolean }) {
+function Logo() {
   return (
     <div className="flex items-center gap-2.5">
       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-nav-accent text-nav">
         <Rocket className="size-4.5" strokeWidth={2.4} />
       </span>
-      {!compact && (
-        <div className="leading-tight">
-          <div className="text-[13px] font-semibold tracking-tight text-nav-ink">
-            Internship Prep
-          </div>
-          <div className="text-[10px] uppercase tracking-[0.16em] text-nav-accent">Drive · IITM</div>
-        </div>
-      )}
+      <div className="leading-tight">
+        <div className="text-[13px] font-semibold tracking-tight text-nav-ink">Internship Prep</div>
+        <div className="text-[10px] uppercase tracking-[0.16em] text-nav-accent">Drive · IITM</div>
+      </div>
     </div>
   )
 }
@@ -115,7 +112,7 @@ function StreakCard() {
           <Flame className="size-4 text-nav-accent" />
           {streak.current}-day streak
         </span>
-        <span className="font-mono text-[10px] text-nav-muted">best {streak.best}</span>
+        <span className="tabular-nums text-[10px] text-nav-muted">best {streak.best}</span>
       </div>
 
       <div className="mt-2.5 flex gap-0.5">
@@ -167,7 +164,7 @@ export default function Shell() {
   const title = TITLES[loc.pathname] ?? (loc.pathname.startsWith('/forum') ? 'Forum' : '')
 
   const sidebar = (
-    <div className="flex h-full flex-col gap-6 bg-nav p-4">
+    <div className="pad-safe-b flex h-full flex-col gap-6 bg-nav p-4">
       <div className="flex items-center justify-between px-1 pt-1">
         <Logo />
         <button
@@ -233,7 +230,7 @@ export default function Shell() {
             title={`${streak.current}-day streak · best ${streak.best}`}
           >
             <Flame className="size-3.5 text-accent" />
-            <span className="font-mono text-xs">{streak.current}d</span>
+            <span className="tabular-nums text-xs">{streak.current}d</span>
           </div>
 
           <button
@@ -261,7 +258,7 @@ export default function Shell() {
         open={confirmOut}
         onClose={() => setConfirmOut(false)}
         title="Log out?"
-        sub="This is a prototype — your local progress stays saved in this browser."
+        sub="This is a prototype. Your local progress stays saved in this browser."
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirmOut(false)}>

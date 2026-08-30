@@ -37,7 +37,7 @@ function loadDraft(): Draft {
 
 /**
  * Used for both "new post" and "edit post". In edit mode the anonymity toggle is
- * hidden — flipping it after the fact would either expose a name people chose to
+ * hidden. Flipping it after the fact would either expose a name people chose to
  * hide, or retroactively hide one others have already replied to.
  */
 export function ComposeModal({

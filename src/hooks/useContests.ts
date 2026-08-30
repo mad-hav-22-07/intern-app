@@ -4,7 +4,7 @@ import { clearContestCache, fetchAllFeeds, type FeedResult } from '@/lib/contest
 
 /**
  * The curated listings merged with whatever the live feeds return. Feed failures
- * are surfaced per source rather than thrown — the page still works on the
+ * are surfaced per source rather than thrown; the page still works on the
  * curated list alone.
  */
 export function useContests() {

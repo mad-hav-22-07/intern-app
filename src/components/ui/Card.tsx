@@ -1,3 +1,4 @@
+/** The surface every block of content sits on, plus its standard header row. */
 import type { HTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 

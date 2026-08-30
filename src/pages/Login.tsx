@@ -1,3 +1,10 @@
+/**
+ * The sign-in screen.
+ *
+ * Credentials are a hardcoded check in `AppContext`; there is no auth server. The
+ * registration and password-reset dialogs describe how the real flow would work and
+ * keep their inputs disabled rather than pretending to submit.
+ */
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -20,9 +27,9 @@ import { Badge } from '@/components/ui/Badge'
 import { DEMO_PASS, DEMO_USER, useApp } from '@/context/AppContext'
 
 const HIGHLIGHTS = [
-  { icon: Sparkles, title: 'Role-aware prep tracks', body: 'Quant, SDE, Finance, Consult, AI/ML, FMCG and Core — each with its own curated material.' },
+  { icon: Sparkles, title: 'Role-aware prep tracks', body: 'Quant, SDE, Finance, Consult, AI/ML, FMCG and Core, each with its own curated material.' },
   { icon: FileCheck2, title: 'AI resume scoring', body: 'Score out of 100 against the profile you are targeting, with concrete rewrites.' },
-  { icon: BookMarked, title: 'Blue Book analysis', body: 'Every company, round, cutoff and conversion rate — plus a chatbot that answers questions about it.' },
+  { icon: BookMarked, title: 'Blue Book analysis', body: 'Every company, round, cutoff and conversion rate, plus a chatbot that answers questions about it.' },
   { icon: Mic, title: 'Mock interviews & exams', body: 'Round-by-round practice with feedback, solo or head-to-head against friends.' },
   { icon: Trophy, title: 'Competition radar', body: 'Unstop, Codeforces and insti mails filtered to the roles you actually care about.' },
   { icon: MessagesSquare, title: 'Peer forum', body: 'Interview experiences from the batch above you, moderated and searchable.' },
@@ -52,7 +59,7 @@ export default function Login() {
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">
-      {/* left — pitch */}
+      {/* left: the pitch */}
       <div className="relative hidden flex-col justify-between bg-nav p-10 text-nav-ink lg:flex xl:p-14">
         <div className="flex items-center gap-3">
           <span className="grid size-10 place-items-center rounded-xl bg-nav-accent text-nav">
@@ -90,13 +97,13 @@ export default function Login() {
         </div>
 
         <div className="flex items-center gap-6 text-xs text-nav-muted">
-          <span><b className="font-mono text-nav-ink">1,240+</b> students</span>
-          <span><b className="font-mono text-nav-ink">15</b> companies analysed</span>
-          <span><b className="font-mono text-nav-ink">7</b> prep tracks</span>
+          <span><b className="tabular-nums text-nav-ink">1,240+</b> students</span>
+          <span><b className="tabular-nums text-nav-ink">15</b> companies analysed</span>
+          <span><b className="tabular-nums text-nav-ink">7</b> prep tracks</span>
         </div>
       </div>
 
-      {/* right — form */}
+      {/* right: the form */}
       <div className="flex items-center justify-center p-6 sm:p-10">
         <div className="anim-in w-full max-w-sm">
           <div className="mb-8 lg:hidden">
@@ -212,7 +219,7 @@ export default function Login() {
             <Button variant="primary" className="w-full" disabled>Continue with Google</Button>
           </div>
           <p className="text-xs text-muted">
-            Disabled in this prototype — sign in with the demo credentials instead.
+            Disabled in this prototype. Sign in with the demo credentials instead.
           </p>
         </div>
       </Modal>
@@ -227,7 +234,7 @@ export default function Login() {
         <div className="space-y-4 text-sm">
           <p className="text-muted">
             A reset link would be emailed to your institute address. With Google sign-in this screen
-            disappears entirely — which is part of why it is the recommended route.
+            disappears entirely, which is part of why it is the recommended route.
           </p>
           <div className="rounded-xl border border-line bg-surface-2 p-4 opacity-60">
             <Label>Institute email</Label>

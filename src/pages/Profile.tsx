@@ -1,3 +1,10 @@
+/**
+ * Identity, targets, and everything the platform actually knows about the user's
+ * effort: the streak, the activity wall, per-track progress and milestones.
+ *
+ * All of it is derived from real logged activity rather than stored figures. The
+ * only scripted part is the resume review, which says so on screen.
+ */
 import { useEffect, useMemo, useState } from 'react'
 import {
   UserRound,
@@ -60,7 +67,7 @@ function Stat({
         <span className="text-[11px] uppercase tracking-wider text-muted">{label}</span>
         <span className="text-accent">{icon}</span>
       </div>
-      <p className="mt-2 font-mono text-2xl font-semibold">{value}</p>
+      <p className="mt-2 tabular-nums text-2xl font-semibold">{value}</p>
       {sub && <p className="mt-1 text-[11px] text-muted">{sub}</p>}
     </Card>
   )
@@ -292,7 +299,7 @@ export default function ProfilePage() {
               sub="today"
             />
             <div>
-              <p className="flex items-center gap-1.5 font-mono text-xl font-semibold">
+              <p className="flex items-center gap-1.5 tabular-nums text-xl font-semibold">
                 <Flame className="size-4 text-accent" />
                 {streak.current}d
               </p>
@@ -348,7 +355,7 @@ export default function ProfilePage() {
                 >
                   <Minus className="size-3.5" />
                 </button>
-                <span className="w-7 text-center font-mono text-xs">{dailyGoal}</span>
+                <span className="w-7 text-center tabular-nums text-xs">{dailyGoal}</span>
                 <button
                   onClick={() => setDailyGoal(Math.min(12, dailyGoal + 1))}
                   aria-label="Raise daily goal"
@@ -383,7 +390,7 @@ export default function ProfilePage() {
         <Card className="h-fit">
           <CardHead
             title="Track progress"
-            sub="Ticked off from the dashboard — this is the same data, per profile."
+            sub="Ticked off from the dashboard. The same data, broken out per profile."
             icon={<BookOpen className="size-4" />}
             action={<Badge tone="accent">{Math.round(overall.pct)}%</Badge>}
           />
@@ -392,7 +399,7 @@ export default function ProfilePage() {
               <div key={t.id}>
                 <div className="mb-1 flex items-baseline justify-between gap-3">
                   <span className="text-[13px] font-medium">{t.label}</span>
-                  <span className="font-mono text-xs text-muted">
+                  <span className="tabular-nums text-xs text-muted">
                     {t.completed}/{t.total}
                   </span>
                 </div>
@@ -548,7 +555,7 @@ export default function ProfilePage() {
           </div>
           {!profile.targetRoles.length && (
             <p className="mx-5 mb-5 rounded-xl border border-warn/25 bg-warn/8 px-3.5 py-2.5 text-xs text-warn">
-              Pick at least one — the dashboard has nothing to show without it.
+              Pick at least one. The dashboard has nothing to show without it.
             </p>
           )}
         </Card>
@@ -633,7 +640,7 @@ export default function ProfilePage() {
                   <div key={b.label}>
                     <div className="mb-1 flex items-baseline justify-between gap-3">
                       <span className="text-[13px] font-medium">{b.label}</span>
-                      <span className="font-mono text-xs text-muted">{b.score}</span>
+                      <span className="tabular-nums text-xs text-muted">{b.score}</span>
                     </div>
                     <Progress value={b.score} />
                     <p className="mt-1 text-[11px] text-muted">{b.note}</p>

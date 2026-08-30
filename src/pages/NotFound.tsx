@@ -1,3 +1,4 @@
+/** Unknown paths. Distinct from `/coming-soon`, which is for routes that exist but are unfinished. */
 import { Link } from 'react-router-dom'
 import { Compass } from 'lucide-react'
 import { EmptyState } from '@/components/ui/Page'

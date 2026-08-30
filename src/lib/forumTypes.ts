@@ -35,7 +35,7 @@ export type ForumComment = {
   editedAt: string | null
   /** Removed by its author but kept as a tombstone so the replies under it survive. */
   deleted: boolean
-  /** Built client-side from parentId — the table itself is flat. */
+  /** Built client-side from parentId; the table itself is flat. */
   replies: ForumComment[]
 }
 
@@ -99,8 +99,8 @@ export type VoteTarget = { kind: 'post' | 'comment'; id: string }
 /** How many reports before a post shows the moderation banner. */
 export const REPORT_THRESHOLD = 3
 
-export const ANON_NAME = 'Anonymous'
-export const ANON_ROLL = 'hidden'
+const ANON_NAME = 'Anonymous'
+const ANON_ROLL = 'hidden'
 
 export const TITLE_MIN = 5
 export const TITLE_MAX = 200

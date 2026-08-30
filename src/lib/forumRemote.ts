@@ -109,7 +109,7 @@ export async function listPostsRemote(opts: ListOptions): Promise<ForumPost[]> {
 
   // 'top' orders in SQL. 'new' and 'hot' both want recent rows: hot's age decay
   // can't be expressed through PostgREST, so pull the most recent PAGE_SIZE and
-  // rank client-side — ordering hot by score instead would bury the new posts hot
+  // rank client-side. Ordering hot by score instead would bury the new posts hot
   // exists to surface.
   q =
     opts.sort === 'top'
@@ -297,7 +297,7 @@ export async function voteRemote(target: VoteTarget, value: 1 | -1): Promise<num
   return (data as number) ?? 0
 }
 
-/** Ownership is checked inside the RPC — pass null to clear. */
+/** Ownership is checked inside the RPC. Pass null to clear. */
 export async function acceptAnswerRemote(
   postId: string,
   commentId: string | null,

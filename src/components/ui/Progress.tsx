@@ -18,7 +18,7 @@ export function Progress({
           style={{ width: `${v}%` }}
         />
       </div>
-      {showLabel && <span className="font-mono text-[11px] text-muted">{v}%</span>}
+      {showLabel && <span className="tabular-nums text-[11px] text-muted">{v}%</span>}
     </div>
   )
 }
@@ -58,7 +58,7 @@ export function Ring({
       <div className="absolute text-center leading-none">
         <div
           className={cn(
-            'font-mono font-semibold leading-none',
+            'tabular-nums font-semibold leading-none',
             String(label ?? v).length > 3 ? 'text-lg' : 'text-2xl',
           )}
         >

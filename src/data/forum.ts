@@ -44,7 +44,7 @@ type PostSeed = {
 const SEED: PostSeed[] = [
   {
     id: 'p1',
-    title: 'Megathread: Intern season 2026 — post your shortlists and rounds here',
+    title: 'Megathread: Intern season 2026, post your shortlists and rounds here',
     body: 'Keeping one place for everything so the feed does not get clogged. Format: Company | Profile | Round | What was asked. Please do not name interviewers.',
     author: 'Ananya S',
     roll: 'CS22B015',
@@ -54,15 +54,15 @@ const SEED: PostSeed[] = [
     flair: 'Megathread',
     pinned: true,
     comments: [
-      { id: 'p1c1', author: 'Rohit K', roll: 'EE22B091', body: 'Rubrik | SDE | Round 1 — two mediums, one on sliding window and one on LRU cache design. 70 minutes, HackerRank.', hoursAgo: 2, votes: 41 },
+      { id: 'p1c1', author: 'Rohit K', roll: 'EE22B091', body: 'Rubrik | SDE | Round 1: two mediums, one on sliding window and one on LRU cache design. 70 minutes, HackerRank.', hoursAgo: 2, votes: 41 },
       { id: 'p1c1r1', author: 'Ananya S', roll: 'CS22B015', body: 'Same set for me. The LRU one wanted O(1) for both get and put, partial credit if you used an ordered map.', hoursAgo: 1, votes: 18, parent: 'p1c1' },
-      { id: 'p1c2', author: 'Sneha M', roll: 'ME22B004', body: 'BCG | Consulting | Round 2 — profitability case on a regional cinema chain. Interviewer pushed hard on the cost side, be ready to break down fixed vs variable quickly.', hoursAgo: 1, votes: 33 },
+      { id: 'p1c2', author: 'Sneha M', roll: 'ME22B004', body: 'BCG | Consulting | Round 2: profitability case on a regional cinema chain. Interviewer pushed hard on the cost side, be ready to break down fixed vs variable quickly.', hoursAgo: 1, votes: 33 },
     ],
   },
   {
     id: 'p2',
-    title: 'Optiver quant round — what actually showed up',
-    body: 'Did the Optiver test yesterday. 8 minutes of mental maths (arithmetic under time pressure, this is the real filter), then 6 probability questions, then one market-making style question. The mental maths section is trainable — I used arithmetic drills for two weeks and went from 60% to 92%.',
+    title: 'Optiver quant round: what actually showed up',
+    body: 'Did the Optiver test yesterday. 8 minutes of mental maths (arithmetic under time pressure, this is the real filter), then 6 probability questions, then one market-making style question. The mental maths section is trainable. I used arithmetic drills for two weeks and went from 60% to 92%.',
     author: 'Karthik V',
     roll: 'MA22B027',
     hoursAgo: 5,
@@ -91,7 +91,7 @@ const SEED: PostSeed[] = [
   },
   {
     id: 'p4',
-    title: 'Case partner wanted — consulting, evenings, starting this week',
+    title: 'Case partner wanted: consulting, evenings, starting this week',
     body: 'Looking for one serious partner to do a case a day, 8-9pm, alternating interviewer and interviewee. I have the IITM case book and about 20 cases from other campuses. DM if interested.',
     author: 'Sneha M',
     roll: 'ME22B004',
@@ -105,8 +105,8 @@ const SEED: PostSeed[] = [
   },
   {
     id: 'p5',
-    title: 'Resume checker gave me 61 — is the "quantify everything" advice actually real?',
-    body: 'Every bullet I have is technically true but none of them have numbers because my project did not have users. What do people do here — do you estimate, or leave it qualitative?',
+    title: 'Resume checker gave me 61. Is the "quantify everything" advice actually real?',
+    body: 'Every bullet I have is technically true but none of them have numbers because my project did not have users. What do people do here, estimate or leave it qualitative?',
     author: 'Priya N',
     roll: 'BT23B019',
     hoursAgo: 20,
@@ -134,7 +134,7 @@ const SEED: PostSeed[] = [
   },
   {
     id: 'p7',
-    title: 'HUL GD round format — 6 people, 15 minutes, abstract topic',
+    title: 'HUL GD round format: 6 people, 15 minutes, abstract topic',
     body: 'Topic was "Is convenience making us worse at patience". Panel scored on structure, not volume. Two people who spoke the most did not clear. One person who spoke three times but summarised at the end did.',
     author: 'Ishaan B',
     roll: 'CH22B038',
@@ -163,7 +163,7 @@ const SEED: PostSeed[] = [
     title: 'Selling my "guaranteed shortlist" course, DM for price',
     body: 'Cracked 8 offers, sharing my exact method, limited seats.',
     author: 'anon_9241',
-    roll: '—',
+    roll: 'unverified',
     hoursAgo: 92,
     votes: -37,
     topic: 'general',
@@ -191,7 +191,7 @@ const SEED: PostSeed[] = [
 
 const iso = (hoursAgo: number) => new Date(Date.now() - hoursAgo * 3_600_000).toISOString()
 
-/** Seed authors are other students — never this browser, so votes stay honest. */
+/** Seed authors are other students, never this browser, so votes stay honest. */
 const SEED_KEY = 'seed'
 
 export function seedPosts(): ForumPost[] {

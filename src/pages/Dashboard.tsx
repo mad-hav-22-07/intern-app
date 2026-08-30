@@ -1,3 +1,10 @@
+/**
+ * The prep track for one target role at a time.
+ *
+ * The role dropdown is fed by `profile.targetRoles`, so this page has nothing to
+ * show until at least one profile is picked, which is the empty state below.
+ * Ticking a resource writes to `done` in the context and counts toward the streak.
+ */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -165,7 +172,7 @@ function ResourceRow({
       </div>
 
       {effort && (
-        <span className="shrink-0 rounded-md bg-surface px-2 py-1 font-mono text-[10px] text-muted">
+        <span className="shrink-0 rounded-md bg-surface px-2 py-1 tabular-nums text-[10px] text-muted">
           {effort}
         </span>
       )}
@@ -240,7 +247,7 @@ export default function Dashboard() {
             <span className="text-[11px] uppercase tracking-wider text-muted">Track progress</span>
             <Target className="size-4 text-accent" />
           </div>
-          <p className="mt-2 font-mono text-2xl font-semibold">
+          <p className="mt-2 tabular-nums text-2xl font-semibold">
             {stats.completed}
             <span className="text-base text-muted">/{stats.total}</span>
           </p>
@@ -252,7 +259,7 @@ export default function Dashboard() {
             <span className="text-[11px] uppercase tracking-wider text-muted">Current streak</span>
             <Flame className="size-4 text-accent" />
           </div>
-          <p className="mt-2 font-mono text-2xl font-semibold">{streak.current}d</p>
+          <p className="mt-2 tabular-nums text-2xl font-semibold">{streak.current}d</p>
           <p className="mt-1 text-[11px] text-muted">
             Best {streak.best}d · {streak.todayCount}/{dailyGoal} today
           </p>
@@ -264,7 +271,7 @@ export default function Dashboard() {
               <span className="text-[11px] uppercase tracking-wider text-muted">Resume score</span>
               <FileCheck2 className="size-4 text-accent" />
             </div>
-            <p className="mt-2 font-mono text-2xl font-semibold">
+            <p className="mt-2 tabular-nums text-2xl font-semibold">
               {RESUME_REVIEW.score}
               <span className="text-base text-muted">/100</span>
             </p>
@@ -282,7 +289,7 @@ export default function Dashboard() {
               {upcoming[0]?.title ?? 'Nothing scheduled'}
             </p>
             <p className="mt-1 text-[11px] text-accent">
-              {upcoming[0] ? relativeLabel(upcoming[0].startsAt) : '—'}
+              {upcoming[0] ? relativeLabel(upcoming[0].startsAt) : 'Nothing yet'}
             </p>
           </Card>
         </Link>

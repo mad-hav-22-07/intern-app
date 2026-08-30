@@ -50,7 +50,7 @@ export function OwnerMenu({
         onClick={() => setOpen((o) => !o)}
         aria-label="Post actions"
         aria-expanded={open}
-        className="grid size-7 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+        className="grid size-9 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-ink sm:size-7"
       >
         <MoreHorizontal className="size-4" />
       </button>
@@ -64,7 +64,7 @@ export function OwnerMenu({
                 setOpen(false)
                 onEdit()
               }}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-ink transition-colors hover:bg-surface-2"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs text-ink transition-colors hover:bg-surface-2 sm:py-2"
             >
               <Pencil className="size-3.5" /> Edit
             </button>

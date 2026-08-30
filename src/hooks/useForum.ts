@@ -16,7 +16,7 @@ const message = (e: unknown) =>
 /**
  * The post list, plus the "N new posts" pill.
  *
- * Realtime inserts from *other* people are not spliced into the visible list —
+ * Realtime inserts from *other* people are not spliced into the visible list;
  * that would make rows jump under the reader's cursor. They raise `pending`
  * instead, and the reader decides when to pull them in. Changes this browser
  * made are folded in silently, because the reader already knows about those.
@@ -56,7 +56,7 @@ export function useForumList(opts: ListOptions) {
   }, [])
 
   // Skeletons only on the very first load. Later filter changes swap the rows in
-  // place — replacing a full list with skeletons on every keystroke reads as a
+  // place. Replacing a full list with skeletons on every keystroke reads as a
   // page flash, not as progress.
   useEffect(() => {
     void load(firstLoad.current)
@@ -126,7 +126,7 @@ export function useForumThread(postId: string | undefined, sort: CommentSort) {
 
   useEffect(() => api.subscribe(() => void load(false)), [load])
 
-  // Re-sorting is a pure view concern — no refetch, so switching sort is instant.
+  // Re-sorting is a pure view concern: no refetch, so switching sort is instant.
   const comments = useMemo(
     () => buildCommentTree(rows, sort, post?.acceptedCommentId),
     [rows, sort, post?.acceptedCommentId],
@@ -155,7 +155,7 @@ export function useForumThread(postId: string | undefined, sort: CommentSort) {
 export function useVotes() {
   const [votes, setVotes] = useState<VoteMap>({})
   // Mirrors `votes` so `cast` can read the current value without listing it as a
-  // dependency — otherwise every vote would rebuild every row's click handler.
+  // dependency, otherwise every vote would rebuild every row's click handler.
   const ref = useRef<VoteMap>({})
 
   const apply = useCallback((next: VoteMap) => {
@@ -172,7 +172,7 @@ export function useVotes() {
 
   const cast = useCallback(
     async (target: VoteTarget, value: 1 | -1): Promise<number> => {
-      // VoteMap is a plain Record, so indexing it types as 1 | -1 — assert the
+      // VoteMap is a plain Record, so indexing it types as 1 | -1, so assert the
       // miss case back in or the `=== 0` checks below look unreachable to TS.
       const before = ref.current
       const previous: 1 | -1 | 0 = (before[target.id] as 1 | -1 | undefined) ?? 0

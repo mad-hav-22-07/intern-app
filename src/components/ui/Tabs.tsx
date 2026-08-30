@@ -42,7 +42,7 @@ export function Tabs<T extends string>({
           >
             {it.label}
             {it.count !== undefined && (
-              <span className={cn('ml-1.5 font-mono', active ? 'opacity-80' : 'opacity-60')}>
+              <span className={cn('ml-1.5 tabular-nums', active ? 'opacity-80' : 'opacity-60')}>
                 {it.count}
               </span>
             )}

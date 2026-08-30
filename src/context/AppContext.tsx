@@ -1,3 +1,13 @@
+/**
+ * The only cross-page state in the app.
+ *
+ * Everything here is mirrored to `localStorage` on change, so a refresh loses
+ * nothing, and read back through a lazy `useState` initialiser on boot. There is no
+ * server-side user record: this browser *is* the account.
+ *
+ * Page-local state (filters, open modals, drafts) deliberately stays in the page.
+ * Only values two pages both need are promoted to here.
+ */
 import {
   createContext,
   useCallback,
@@ -24,7 +34,7 @@ const CAL_KEY = 'ipd.calendar.v1'
 const ACTIVITY_KEY = 'ipd.activity.v1'
 const GOAL_KEY = 'ipd.goal.v1'
 
-/** Prototype credentials — no backend, by design. */
+/** Prototype credentials. No backend, by design. */
 export const DEMO_USER = 'admin'
 export const DEMO_PASS = 'admin123'
 
@@ -50,7 +60,7 @@ type Ctx = {
   done: string[]
   toggleDone: (id: string) => void
 
-  /** competition ids the user has committed to — the only things on the calendar */
+  /** competition ids the user has committed to; the only things on the calendar */
   registered: string[]
   toggleRegistered: (id: string) => void
 

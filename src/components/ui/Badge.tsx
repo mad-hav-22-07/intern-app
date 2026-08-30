@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 
-type Tone = 'accent' | 'neutral' | 'warn' | 'danger' | 'outline' | 'solid'
+type Tone = 'accent' | 'neutral' | 'warn' | 'danger' | 'outline'
 
 const tones: Record<Tone, string> = {
   accent: 'bg-accent-soft text-accent border-accent/20',
@@ -9,7 +9,6 @@ const tones: Record<Tone, string> = {
   warn: 'bg-warn/8 text-warn border-warn/20',
   danger: 'bg-danger/8 text-danger border-danger/20',
   outline: 'bg-transparent text-muted border-line',
-  solid: 'bg-accent text-accent-fg border-accent',
 }
 
 export function Badge({

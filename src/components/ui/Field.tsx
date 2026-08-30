@@ -7,10 +7,15 @@ import type {
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
+/*
+ * `text-base sm:text-sm` is not a style choice. iOS Safari zooms the whole page
+ * in when a focused field's text is under 16px, and never zooms back out, so
+ * every field has to be 16px on phones.
+ */
 const base =
-  'w-full rounded-xl border border-line bg-surface px-3.5 text-sm text-ink placeholder:text-muted/70 ' +
-  'transition-all duration-200 focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent-soft ' +
-  'disabled:bg-surface-2 disabled:text-muted'
+  'w-full rounded-xl border border-line bg-surface px-3.5 text-base sm:text-sm text-ink ' +
+  'placeholder:text-muted/70 transition-all duration-200 focus:border-accent focus:outline-none ' +
+  'focus:ring-4 focus:ring-accent-soft disabled:bg-surface-2 disabled:text-muted'
 
 export function Label({ children, hint }: { children: ReactNode; hint?: ReactNode }) {
   return (
@@ -22,7 +27,7 @@ export function Label({ children, hint }: { children: ReactNode; hint?: ReactNod
 }
 
 export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(base, 'h-10', className)} {...rest} />
+  return <input className={cn(base, 'h-11 sm:h-10', className)} {...rest} />
 }
 
 export function Textarea({ className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
@@ -32,7 +37,7 @@ export function Textarea({ className, ...rest }: TextareaHTMLAttributes<HTMLText
 export function Select({ className, children, ...rest }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <div className="relative">
-      <select className={cn(base, 'h-10 appearance-none pr-9', className)} {...rest}>
+      <select className={cn(base, 'h-11 sm:h-10 appearance-none pr-9', className)} {...rest}>
         {children}
       </select>
       <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted" />

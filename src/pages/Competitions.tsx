@@ -1,3 +1,10 @@
+/**
+ * Listings on the left, the user's own calendar on the right.
+ *
+ * The listings merge live Codeforces and LeetCode feeds with the curated entries an
+ * API cannot know about. The calendar deliberately shows *only* what the user added
+ * with the Add button; nothing schedules itself.
+ */
 import { useMemo, useState } from 'react'
 import {
   Trophy,
@@ -100,7 +107,7 @@ function CompCard({ c, highlight }: { c: Competition; highlight?: boolean }) {
         <div className="shrink-0 text-right">
           <p
             className={cn(
-              'font-mono text-xs font-medium',
+              'tabular-nums text-xs font-medium',
               urgent ? 'text-warn' : past ? 'text-muted' : 'text-accent',
             )}
           >
@@ -163,7 +170,7 @@ function CompCard({ c, highlight }: { c: Competition; highlight?: boolean }) {
 }
 
 /**
- * Shows what the user has actually committed to. Nothing lands here on its own —
+ * Shows what the user has actually committed to. Nothing lands here on its own:
  * a listing only appears once it is added from the list on the left, so the month
  * stays a plan rather than a firehose. `preview` optionally outlines the days that
  * the current filters would put on it, without claiming them.
@@ -275,7 +282,7 @@ function MiniCalendar({
               key={k}
               onClick={() => onSelect(isSelected ? null : k)}
               aria-pressed={isSelected}
-              aria-label={`${day} ${MONTHS[view.getMonth()]} — ${booked.length} on your calendar`}
+              aria-label={`${day} ${MONTHS[view.getMonth()]}, ${booked.length} on your calendar`}
               className={cn(
                 'relative grid aspect-square place-items-center rounded-lg border text-xs transition-all duration-200',
                 isSelected && 'ring-2 ring-accent/50',
@@ -317,7 +324,7 @@ function MiniCalendar({
           <span className="truncate">
             Next up: <b className="font-medium text-accent">{nextElsewhere.title}</b>
           </span>
-          <span className="shrink-0 font-mono">{istDate(nextElsewhere.startsAt)} →</span>
+          <span className="shrink-0 tabular-nums">{istDate(nextElsewhere.startsAt)} →</span>
         </button>
       )}
     </div>
@@ -451,7 +458,7 @@ export default function Competitions() {
       <PageHeader
         title="Competitions"
         icon={<Trophy className="size-5" />}
-        sub="Live contests from Codeforces and LeetCode, plus case comps, hackathons and insti mails — filtered to the profiles you are targeting."
+        sub="Live contests from Codeforces and LeetCode, plus case comps, hackathons and insti mails, filtered to the profiles you are targeting."
         actions={
           <>
             <Button variant="secondary" onClick={onRefresh} disabled={refreshing || loading}>
@@ -460,7 +467,7 @@ export default function Competitions() {
             </Button>
             <Button variant="secondary" className="lg:hidden" onClick={() => setFiltersOpen(true)}>
               <Filter className="size-4" />
-              {activeFilters > 0 && <span className="font-mono">{activeFilters}</span>}
+              {activeFilters > 0 && <span className="tabular-nums">{activeFilters}</span>}
             </Button>
           </>
         }
@@ -665,7 +672,7 @@ export default function Competitions() {
                 ))
               ) : (
                 <p className="text-[11px] leading-relaxed text-muted">
-                  Nothing yet. The calendar never fills itself — press <b>Add</b> on the contests
+                  Nothing yet. The calendar never fills itself. Press <b>Add</b> on the contests
                   you actually intend to do and they land here.
                 </p>
               )}
@@ -699,7 +706,7 @@ export default function Competitions() {
           <Card className="border-accent/25">
             <CardHead title="Alerts" icon={<Bell className="size-4" />} />
             <p className="px-5 pb-5 pt-3.5 text-[11px] leading-relaxed text-muted">
-              The .ics above already carries two reminders per event — a day before and an hour
+              The .ics above already carries two reminders per event: a day before and an hour
               before. Push notifications for newly opened listings are still to come.
             </p>
           </Card>
@@ -710,7 +717,7 @@ export default function Competitions() {
       {filtersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="anim-fade absolute inset-0 bg-scrim" onClick={() => setFiltersOpen(false)} />
-          <div className="anim-slide-up absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto rounded-t-2xl border-t border-line bg-surface p-5">
+          <div className="pad-safe-b anim-slide-up absolute inset-x-0 bottom-0 max-h-[80dvh] overflow-y-auto rounded-t-2xl border-t border-line bg-surface p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Filters</h3>
               <button

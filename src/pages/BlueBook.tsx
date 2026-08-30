@@ -1,3 +1,9 @@
+/**
+ * Last season's placement data: filters, expandable company rows, and an assistant.
+ *
+ * The numbers are illustrative and the assistant answers only the four suggested
+ * questions. Both are labelled as such in the UI.
+ */
 import { useMemo, useRef, useState, useEffect } from 'react'
 import {
   BookMarked,
@@ -22,6 +28,8 @@ import { COMPANIES, DEPTS, BLUEBOOK_QA, type Company } from '@/data/bluebook'
 import { ROLES, ROLE_MAP, type RoleId } from '@/data/roles'
 import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/cn'
+import { Link } from 'react-router-dom'
+import { comingSoon } from '@/lib/comingSoon'
 
 type Msg = { from: 'bot' | 'me'; text: string }
 
@@ -46,12 +54,12 @@ function Row({ c }: { c: Company }) {
         </td>
         <td className="px-3 py-3"><Badge tone="accent">{ROLE_MAP[c.profile].label}</Badge></td>
         <td className="px-3 py-3 text-[13px] whitespace-nowrap">{c.day}</td>
-        <td className="px-3 py-3 font-mono text-[13px] whitespace-nowrap">{c.stipend}</td>
-        <td className="px-3 py-3 font-mono text-[13px]">{c.cgpaCutoff}</td>
-        <td className="px-3 py-3 font-mono text-[13px]">{c.applied}</td>
-        <td className="px-3 py-3 font-mono text-[13px]">{c.shortlisted}</td>
+        <td className="px-3 py-3 tabular-nums text-[13px] whitespace-nowrap">{c.stipend}</td>
+        <td className="px-3 py-3 tabular-nums text-[13px]">{c.cgpaCutoff}</td>
+        <td className="px-3 py-3 tabular-nums text-[13px]">{c.applied}</td>
+        <td className="px-3 py-3 tabular-nums text-[13px]">{c.shortlisted}</td>
         <td className="px-3 py-3">
-          <span className="font-mono text-[13px] text-accent">{c.offers}</span>
+          <span className="tabular-nums text-[13px] text-accent">{c.offers}</span>
           <span className="ml-1.5 text-[11px] text-muted">({conv}%)</span>
         </td>
       </tr>
@@ -67,7 +75,7 @@ function Row({ c }: { c: Company }) {
                   <ol className="space-y-1.5">
                     {c.rounds.map((r, i) => (
                       <li key={r} className="flex items-start gap-2.5 text-[13px]">
-                        <span className="mt-px grid size-5 shrink-0 place-items-center rounded-md bg-accent-soft font-mono text-[10px] text-accent">
+                        <span className="mt-px grid size-5 shrink-0 place-items-center rounded-md bg-accent-soft tabular-nums text-[10px] text-accent">
                           {i + 1}
                         </span>
                         <span className="text-muted">{r}</span>
@@ -94,7 +102,7 @@ function Row({ c }: { c: Company }) {
                       <div key={s.l}>
                         <div className="mb-1 flex justify-between text-[11px]">
                           <span className="text-muted">{s.l}</span>
-                          <span className="font-mono">{s.v}</span>
+                          <span className="tabular-nums">{s.v}</span>
                         </div>
                         <Progress value={(s.v / s.max) * 100} />
                       </div>
@@ -103,9 +111,11 @@ function Row({ c }: { c: Company }) {
                 </div>
                 <p className="text-[11px] text-muted">Location · {c.location}</p>
                 {c.hasVideo && (
-                  <Button size="sm" variant="secondary" className="w-full">
-                    <PlayCircle className="size-3.5" /> Senior experience video (6 min)
-                  </Button>
+                  <Link to={comingSoon('Senior experience videos', '/blue-book')}>
+                    <Button size="sm" variant="secondary" className="w-full">
+                      <PlayCircle className="size-3.5" /> Senior experience video (6 min)
+                    </Button>
+                  </Link>
                 )}
               </div>
             </div>
@@ -120,7 +130,7 @@ function Chatbot() {
   const [msgs, setMsgs] = useState<Msg[]>([
     {
       from: 'bot',
-      text: 'Ask me anything about last season — cutoffs, conversion rates, which departments a company took, how many rounds to expect. I read the whole Blue Book.',
+      text: 'Ask me anything about last season: cutoffs, conversion rates, which departments a company took, how many rounds to expect. I read the whole Blue Book.',
     },
   ])
   const [input, setInput] = useState('')
@@ -144,7 +154,7 @@ function Chatbot() {
           from: 'bot',
           text:
             hit?.a ??
-            'In the prototype I only answer the four suggested questions below — the real version runs retrieval over the parsed Blue Book PDFs and answers anything, with a citation back to the page it came from.',
+            'In the prototype I only answer the four suggested questions below. The real version runs retrieval over the parsed Blue Book PDFs and answers anything, with a citation back to the page it came from.',
         },
       ])
     }, 900)
@@ -246,8 +256,14 @@ export default function BlueBook() {
       <PageHeader
         title="Blue Book Analysis"
         icon={<BookMarked className="size-5" />}
-        sub="Last season's intern placements — every company, round, cutoff and conversion rate, with a chatbot on top of it."
-        actions={<Button variant="secondary"><Download className="size-4" /> Export</Button>}
+        sub="Last season's intern placements. Every company, round, cutoff and conversion rate, with a chatbot on top of it."
+        actions={
+          <Link to={comingSoon('Blue Book export', '/blue-book')}>
+            <Button variant="secondary">
+              <Download className="size-4" /> Export
+            </Button>
+          </Link>
+        }
       />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -262,7 +278,7 @@ export default function BlueBook() {
               <span className="text-[11px] uppercase tracking-wider text-muted">{s.label}</span>
               <s.icon className="size-4 text-accent" />
             </div>
-            <p className="mt-2 font-mono text-2xl font-semibold">{s.value}</p>
+            <p className="mt-2 tabular-nums text-2xl font-semibold">{s.value}</p>
             <p className="mt-1 text-[11px] text-muted">{s.sub}</p>
           </Card>
         ))}
@@ -300,7 +316,7 @@ export default function BlueBook() {
                       key={d}
                       onClick={() => setDept(d)}
                       className={cn(
-                        'rounded-lg border px-2.5 py-1.5 font-mono text-[11px] transition-colors',
+                        'rounded-lg border px-2.5 py-1.5 tabular-nums text-[11px] transition-colors',
                         dept === d ? 'border-accent/50 bg-accent-soft text-accent' : 'border-line bg-surface-2 text-muted hover:text-ink',
                       )}
                     >

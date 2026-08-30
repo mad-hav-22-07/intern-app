@@ -17,7 +17,7 @@ import type {
  *
  * With `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` set, everything goes to
  * Postgres and updates stream in over Realtime. Without them the same calls hit
- * localStorage, so a fresh clone is still a working forum — just a private one.
+ * localStorage, so a fresh clone is still a working forum, just a private one.
  */
 
 export type Author = { name: string; roll: string }

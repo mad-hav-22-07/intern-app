@@ -1,7 +1,8 @@
+/** The one button in the app. Every clickable action uses a variant of this. */
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dark'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 type Size = 'sm' | 'md' | 'lg'
 
 const variants: Record<Variant, string> = {
@@ -11,7 +12,6 @@ const variants: Record<Variant, string> = {
     'bg-surface text-ink border border-line hover:border-accent/50 hover:bg-accent-soft hover:text-accent',
   ghost: 'text-muted hover:text-ink hover:bg-surface-2',
   danger: 'bg-danger/8 text-danger border border-danger/25 hover:bg-danger/14',
-  dark: 'bg-nav text-nav-ink font-medium hover:bg-nav-2',
 }
 
 const sizes: Record<Size, string> = {

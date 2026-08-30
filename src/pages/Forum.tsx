@@ -1,3 +1,11 @@
+/**
+ * The post list.
+ *
+ * Sort, range, topic and search live in the URL, so a filtered feed is a shareable
+ * link and Back undoes a filter change rather than leaving the page. The search box
+ * drives the URL one-way and is debounced, because reading the URL back into the
+ * input would fight the user's typing.
+ */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowUp, Hash, Loader2, MessagesSquare, Plus, Search, ShieldAlert, X } from 'lucide-react'
@@ -124,7 +132,7 @@ export default function Forum() {
       <span className="flex items-center gap-2">
         <Hash className="size-3.5" /> {label}
       </span>
-      <span className="font-mono text-[11px]">{count}</span>
+      <span className="tabular-nums text-[11px]">{count}</span>
     </button>
   )
 
@@ -133,7 +141,7 @@ export default function Forum() {
       <PageHeader
         title="Forum"
         icon={<MessagesSquare className="size-5" />}
-        sub="Interview experiences, questions and case partners — from the batch that just went through it."
+        sub="Interview experiences, questions and case partners, from the batch that just went through it."
         actions={
           <Button variant="primary" onClick={() => setCompose(true)}>
             <Plus className="size-4" /> New post
@@ -245,7 +253,7 @@ export default function Forum() {
               className="anim-pop mx-auto flex items-center gap-2 rounded-full border border-accent/40 bg-accent-soft px-4 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent hover:text-accent-fg"
             >
               <ArrowUp className="size-3.5" />
-              {pending} new {pending === 1 ? 'update' : 'updates'} — refresh
+              {pending} new {pending === 1 ? 'update' : 'updates'}, refresh
             </button>
           )}
 

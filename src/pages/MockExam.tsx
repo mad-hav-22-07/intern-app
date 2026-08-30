@@ -1,3 +1,9 @@
+/**
+ * Timed problem sets.
+ *
+ * The timer, question palette, flagging and scoring are all real; only the question
+ * bank is sample content. Finishing a paper counts toward the day's streak.
+ */
 import { useEffect, useMemo, useState } from 'react'
 import {
   FileCheck2,
@@ -27,8 +33,11 @@ import { EXAMS, FRIENDS, type Exam } from '@/data/exams'
 import { ROLE_MAP } from '@/data/roles'
 import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/cn'
+import { Link } from 'react-router-dom'
+import { comingSoon } from '@/lib/comingSoon'
 
 function Live({ exam, mode, onExit }: { exam: Exam; mode: 'solo' | 'vs'; onExit: () => void }) {
+  const { logActivity } = useApp()
   const qs = exam.questions
   const [idx, setIdx] = useState(0)
   const [picked, setPicked] = useState<Record<string, number>>({})
@@ -46,6 +55,11 @@ function Live({ exam, mode, onExit }: { exam: Exam; mode: 'solo' | 'vs'; onExit:
   useEffect(() => {
     if (seconds === 0) setSubmitted(true)
   }, [seconds])
+
+  // Sitting a paper counts toward today, whether it was submitted or timed out.
+  useEffect(() => {
+    if (submitted) logActivity('mock-exam')
+  }, [submitted, logActivity])
 
   const q = qs[idx]
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
@@ -74,7 +88,7 @@ function Live({ exam, mode, onExit }: { exam: Exam; mode: 'solo' | 'vs'; onExit:
                 <div key={s.l}>
                   <div className="mb-1 flex items-baseline justify-between">
                     <span className="text-[13px] font-medium">{s.l}</span>
-                    <span className="font-mono text-xs text-muted">{s.v}%</span>
+                    <span className="tabular-nums text-xs text-muted">{s.v}%</span>
                   </div>
                   <Progress value={s.v} />
                 </div>
@@ -109,7 +123,7 @@ function Live({ exam, mode, onExit }: { exam: Exam; mode: 'solo' | 'vs'; onExit:
                     )}
                     <div className="min-w-0">
                       <p className="text-[13px] font-medium leading-relaxed">
-                        <span className="mr-1.5 font-mono text-muted">Q{i + 1}.</span>
+                        <span className="mr-1.5 tabular-nums text-muted">Q{i + 1}.</span>
                         {x.text}
                       </p>
                       <p className="mt-2 text-xs text-muted">
@@ -138,7 +152,7 @@ function Live({ exam, mode, onExit }: { exam: Exam; mode: 'solo' | 'vs'; onExit:
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 py-1.5">
           <Clock className={cn('size-3.5', seconds < 60 ? 'text-danger' : 'text-accent')} />
-          <span className={cn('font-mono text-sm', seconds < 60 && 'text-danger')}>{mm}:{ss}</span>
+          <span className={cn('tabular-nums text-sm', seconds < 60 && 'text-danger')}>{mm}:{ss}</span>
         </div>
       </div>
 
@@ -169,7 +183,7 @@ function Live({ exam, mode, onExit }: { exam: Exam; mode: 'solo' | 'vs'; onExit:
                   picked[q.id] === i ? 'border-accent/55 bg-accent-soft text-accent' : 'border-line bg-surface-2 hover:border-accent/30',
                 )}
               >
-                <span className={cn('grid size-6 shrink-0 place-items-center rounded-lg border font-mono text-[11px]', picked[q.id] === i ? 'border-accent bg-accent text-accent-fg' : 'border-line')}>
+                <span className={cn('grid size-6 shrink-0 place-items-center rounded-lg border tabular-nums text-[11px]', picked[q.id] === i ? 'border-accent bg-accent text-accent-fg' : 'border-line')}>
                   {String.fromCharCode(65 + i)}
                 </span>
                 {o}
@@ -200,7 +214,7 @@ function Live({ exam, mode, onExit }: { exam: Exam; mode: 'solo' | 'vs'; onExit:
                   key={x.id}
                   onClick={() => setIdx(i)}
                   className={cn(
-                    'grid aspect-square place-items-center rounded-lg border font-mono text-xs transition-colors',
+                    'grid aspect-square place-items-center rounded-lg border tabular-nums text-xs transition-colors',
                     i === idx
                       ? 'border-accent bg-accent text-accent-fg'
                       : flagged.includes(x.id)
@@ -340,7 +354,7 @@ export default function MockExam() {
               <div className="mt-4 flex-1">
                 <div className="mb-1 flex items-baseline justify-between text-[11px]">
                   <span className="text-muted">Batch average</span>
-                  <span className="font-mono">{e.avgScore}%</span>
+                  <span className="tabular-nums">{e.avgScore}%</span>
                 </div>
                 <Progress value={e.avgScore} />
                 {e.yourBest !== undefined && (
@@ -374,13 +388,15 @@ export default function MockExam() {
       )}
 
       <Card className="border-accent/25">
-        <CardHead title="Open weekly exam" sub="Anyone can attend — no shortlist needed" icon={<CalendarClock className="size-4" />} />
+        <CardHead title="Open weekly exam" sub="Anyone can attend, no shortlist needed" icon={<CalendarClock className="size-4" />} />
         <div className="flex flex-wrap items-center justify-between gap-4 p-5 pt-3.5">
           <p className="max-w-md text-xs leading-relaxed text-muted">
             Every Saturday at 8pm, a mixed set across all seven profiles. Leaderboard published
             afterwards, and the top ten get a written breakdown of where they lost marks.
           </p>
-          <Button variant="primary" size="sm">Reserve my slot</Button>
+          <Link to={comingSoon('Weekly exam booking', '/mock-exam')}>
+            <Button variant="primary" size="sm">Reserve my slot</Button>
+          </Link>
         </div>
       </Card>
 

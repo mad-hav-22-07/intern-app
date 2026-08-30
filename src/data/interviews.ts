@@ -17,9 +17,9 @@ export const ROUNDS: Record<RoleId, Round[]> = {
       desc: 'Two problems, think out loud, optimise before you code.',
       minutes: 45,
       script: [
-        { q: "Let's start with a warm-up. Given an array of integers and a target, return the indices of the two numbers that add to the target. Walk me through your approach before you write anything.", followUp: 'Good. Now what if the array is sorted — can you do it without extra space?' },
+        { q: "Let's start with a warm-up. Given an array of integers and a target, return the indices of the two numbers that add to the target. Walk me through your approach before you write anything.", followUp: 'Good. Now what if the array is sorted, can you do it without extra space?' },
         { q: 'Next one. Design a data structure that supports insert, delete and getRandom, all in O(1) average time. What are you reaching for?', followUp: 'How do you handle the delete in O(1) if the element is in the middle of your array?' },
-        { q: 'Last question — what is the time and space complexity of what you just built, and where would it degrade in production?' },
+        { q: 'Last question. What is the time and space complexity of what you just built, and where would it degrade in production?' },
       ],
     },
     {
@@ -39,7 +39,7 @@ export const ROUNDS: Record<RoleId, Round[]> = {
       desc: 'Fit, motivation and how you handle conflict.',
       minutes: 25,
       script: [
-        { q: 'Tell me about yourself — keep it to about ninety seconds.', followUp: 'You mentioned a team project. What went wrong on it, and what did you personally do about it?' },
+        { q: 'Tell me about yourself, and keep it to about ninety seconds.', followUp: 'You mentioned a team project. What went wrong on it, and what did you personally do about it?' },
         { q: 'Why this company, and why this role specifically? Be concrete.' },
         { q: 'Where do you see the gap between what you know today and what this role needs?' },
       ],
@@ -85,9 +85,9 @@ export const FEEDBACK = {
     'Recovered well when the follow-up invalidated your first assumption.',
   ],
   improve: [
-    { title: 'Complexity stated late', body: 'You gave time complexity only when asked. Volunteer it right after you describe the approach — it signals you were thinking about it all along.' },
+    { title: 'Complexity stated late', body: 'You gave time complexity only when asked. Volunteer it right after you describe the approach. It signals you were thinking about it all along.' },
     { title: 'Edge cases skipped', body: 'Neither solution handled the empty-input case. Say the edge cases out loud even if you do not code them.' },
-    { title: 'Long silences', body: 'Two gaps over forty seconds. Narrate the dead ends too — silence reads as being stuck.' },
+    { title: 'Long silences', body: 'Two gaps over forty seconds. Narrate the dead ends too. Silence reads as being stuck.' },
   ],
   metrics: [
     { label: 'Correctness', value: 84 },

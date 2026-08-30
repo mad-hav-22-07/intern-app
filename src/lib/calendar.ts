@@ -1,8 +1,8 @@
 import type { Competition } from '@/data/competitions'
 
 /**
- * Calendar export. Both formats are real — the .ics opens in Apple Calendar and
- * Outlook, and the Google link opens a pre-filled event — so "my calendar" is
+ * Calendar export. Both formats are real: the .ics opens in Apple Calendar and
+ * Outlook, and the Google link opens a pre-filled event, so "my calendar" is
  * something the user can actually leave the app with.
  */
 
@@ -23,7 +23,7 @@ function escape(text: string): string {
   return text.replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n')
 }
 
-export function toIcs(comps: Competition[]): string {
+function toIcs(comps: Competition[]): string {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',

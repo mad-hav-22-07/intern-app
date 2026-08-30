@@ -106,7 +106,7 @@ function ComposeBox({
         )}
         <div className="flex items-center gap-2">
           {tooLong && (
-            <span className="font-mono text-[11px] text-danger">
+            <span className="tabular-nums text-[11px] text-danger">
               {body.length}/{COMMENT_MAX}
             </span>
           )}
@@ -155,7 +155,7 @@ function CommentNode({
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <Avatar name={author.name} anonymous={comment.isAnonymous} />
             <span className={cn('text-[13px] font-medium', comment.deleted && 'text-muted')}>
-              {comment.deleted ? '—' : author.name}
+              {comment.deleted ? 'Removed' : author.name}
             </span>
             {!comment.deleted && (
               <span className="text-[11px] text-muted">
