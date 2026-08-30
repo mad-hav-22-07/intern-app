@@ -1,15 +1,17 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dark'
 type Size = 'sm' | 'md' | 'lg'
 
 const variants: Record<Variant, string> = {
   primary:
-    'bg-accent text-accent-fg hover:bg-accent-dim shadow-[0_0_0_1px_var(--accent-dim)] font-semibold',
-  secondary: 'bg-surface-2 text-ink border border-line hover:border-accent/60 hover:text-accent',
+    'bg-accent text-accent-fg font-medium shadow-card hover:bg-accent-dim hover:shadow-raised',
+  secondary:
+    'bg-surface text-ink border border-line hover:border-accent/50 hover:bg-accent-soft hover:text-accent',
   ghost: 'text-muted hover:text-ink hover:bg-surface-2',
-  danger: 'bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20',
+  danger: 'bg-danger/8 text-danger border border-danger/25 hover:bg-danger/14',
+  dark: 'bg-nav text-nav-ink font-medium hover:bg-nav-2',
 }
 
 const sizes: Record<Size, string> = {
@@ -32,9 +34,9 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center whitespace-nowrap transition-all duration-150',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-        'disabled:opacity-45 disabled:pointer-events-none active:scale-[0.98]',
+        'inline-flex items-center justify-center whitespace-nowrap',
+        'transition-all duration-200 ease-out',
+        'disabled:opacity-45 disabled:pointer-events-none active:scale-[0.97]',
         variants[variant],
         sizes[size],
         className,

@@ -23,7 +23,6 @@ import { Modal } from '@/components/ui/Modal'
 import { FRIENDS, REQUESTS, type Friend } from '@/data/exams'
 import { ROLE_MAP } from '@/data/roles'
 import { useApp } from '@/context/AppContext'
-import { STREAK } from '@/data/user'
 import { cn } from '@/lib/cn'
 
 function Av({ name, size = 40 }: { name: string; size?: number }) {
@@ -38,7 +37,7 @@ function Av({ name, size = 40 }: { name: string; size?: number }) {
 }
 
 export default function Friends() {
-  const { profile } = useApp()
+  const { profile, streak } = useApp()
   const [tab, setTab] = useState<'friends' | 'leaderboard' | 'requests'>('friends')
   const [q, setQ] = useState('')
   const [add, setAdd] = useState(false)
@@ -51,7 +50,7 @@ export default function Friends() {
 
   const board = [
     ...FRIENDS,
-    { id: 'me', name: profile.name, roll: profile.rollNo, branch: profile.branch, roles: profile.targetRoles, streak: STREAK.current, weekMinutes: 420, solved: 187 },
+    { id: 'me', name: profile.name, roll: profile.rollNo, branch: profile.branch, roles: profile.targetRoles, streak: streak.current, weekMinutes: 420, solved: 187 },
   ].sort((a, b) => b.weekMinutes - a.weekMinutes)
 
   const maxMinutes = Math.max(...board.map((b) => b.weekMinutes))

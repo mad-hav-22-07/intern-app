@@ -16,14 +16,13 @@ export function StorageNotice() {
     )
   }
   return (
-    <div className="flex items-start gap-3 rounded-xl border border-warn/25 bg-warn/10 p-3.5">
+    <div className="flex items-start gap-2.5 rounded-xl border border-warn/25 bg-warn/8 p-3">
       <HardDrive className="mt-0.5 size-4 shrink-0 text-warn" />
       <div>
-        <p className="text-xs font-medium text-warn">Saved to this browser only</p>
+        <p className="text-[11px] font-medium text-warn">Saved to this browser only</p>
         <p className="mt-1 text-[11px] leading-relaxed text-muted">
-          Everything here works — posting, replying, voting — but no database is connected, so
-          nobody else can see it. Set <code className="font-mono">VITE_SUPABASE_URL</code> and{' '}
-          <code className="font-mono">VITE_SUPABASE_ANON_KEY</code> to share it with the batch.
+          Posting, replying, voting and editing all work — but no database is connected yet, so
+          nobody else can see any of it.
         </p>
       </div>
     </div>

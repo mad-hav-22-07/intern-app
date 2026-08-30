@@ -55,9 +55,20 @@ export function Ring({
           style={{ transition: 'stroke-dashoffset 900ms cubic-bezier(0.22,1,0.36,1)' }}
         />
       </svg>
-      <div className="absolute text-center">
-        <div className="font-mono text-2xl font-semibold leading-none">{label ?? v}</div>
-        {sub && <div className="mt-1 text-[10px] uppercase tracking-wider text-muted">{sub}</div>}
+      <div className="absolute text-center leading-none">
+        <div
+          className={cn(
+            'font-mono font-semibold leading-none',
+            String(label ?? v).length > 3 ? 'text-lg' : 'text-2xl',
+          )}
+        >
+          {label ?? v}
+        </div>
+        {sub && (
+          <div className="mt-1 whitespace-nowrap text-[10px] uppercase tracking-wider text-muted">
+            {sub}
+          </div>
+        )}
       </div>
     </div>
   )

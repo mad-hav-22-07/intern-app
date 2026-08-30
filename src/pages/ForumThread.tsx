@@ -1,59 +1,89 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, type KeyboardEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, MessageCircle, Send, ShieldAlert } from 'lucide-react'
+import { ArrowLeft, Check, Link2, MessageCircle, Send, ShieldAlert } from 'lucide-react'
 import { Card, CardHead } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Textarea } from '@/components/ui/Field'
-import { EmptyState } from '@/components/ui/Page'
+import { EmptyState, Skeleton } from '@/components/ui/Page'
+import { Tabs } from '@/components/ui/Tabs'
 import { Avatar, VoteControl } from '@/components/forum/VoteControl'
 import { CommentTree, type CommentActions } from '@/components/forum/CommentTree'
+import { ComposeModal } from '@/components/forum/ComposeModal'
+import { OwnerMenu } from '@/components/forum/OwnerMenu'
+import { RichText } from '@/components/forum/RichText'
 import { AnonToggle } from '@/components/forum/AnonToggle'
 import { TOPIC_LABEL } from '@/data/forum'
 import * as forumApi from '@/lib/forumApi'
-import { REPORT_THRESHOLD, displayAuthor } from '@/lib/forumTypes'
+import {
+  COMMENT_MAX,
+  REPORT_THRESHOLD,
+  displayAuthor,
+  type CommentSort,
+  type NewPostInput,
+} from '@/lib/forumTypes'
 import { identityKey } from '@/lib/identity'
 import { timeAgo } from '@/lib/time'
 import { useForumThread, useVotes } from '@/hooks/useForum'
 import { useApp } from '@/context/AppContext'
+import { cn } from '@/lib/cn'
 
 export default function ForumThread() {
   const { postId } = useParams<{ postId: string }>()
-  const { profile } = useApp()
+  const { profile, logActivity } = useApp()
   const nav = useNavigate()
 
-  const { post, comments, loading, missing, error, refresh } = useForumThread(postId)
+  const [sort, setSort] = useState<CommentSort>('best')
+  const { post, comments, loading, missing, error, patchScore, refresh } = useForumThread(
+    postId,
+    sort,
+  )
   const { votes, cast } = useVotes()
 
   const [draft, setDraft] = useState('')
   const [anonymous, setAnonymous] = useState(false)
   const [posting, setPosting] = useState(false)
-  const [reported, setReported] = useState<string[]>([])
+  const [postError, setPostError] = useState<string | null>(null)
+  const [reported, setReported] = useState<string[]>(() => forumApi.myReports())
+  const [editing, setEditing] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const author = { name: profile.name, roll: profile.rollNo }
 
   const voteOn = useCallback(
     async (kind: 'post' | 'comment', id: string, value: 1 | -1) => {
-      await cast({ kind, id }, value)
-      await refresh()
+      const delta = await cast({ kind, id }, value)
+      patchScore(kind, id, delta)
     },
-    [cast, refresh],
+    [cast, patchScore],
   )
 
   const addComment = async (parentId: string | null, body: string, anon: boolean) => {
     if (!postId) return
     await forumApi.createComment({ postId, parentId, body, isAnonymous: anon }, author)
+    logActivity('forum')
     await refresh()
   }
 
   const submitTopLevel = async () => {
-    if (!draft.trim() || posting) return
+    const body = draft.trim()
+    if (!body || body.length > COMMENT_MAX || posting) return
     setPosting(true)
+    setPostError(null)
     try {
-      await addComment(null, draft, anonymous)
+      await addComment(null, body, anonymous)
       setDraft('')
+    } catch (e) {
+      setPostError(e instanceof Error ? e.message : 'Could not post that comment.')
     } finally {
       setPosting(false)
+    }
+  }
+
+  const onDraftKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault()
+      void submitTopLevel()
     }
   }
 
@@ -70,15 +100,46 @@ export default function ForumThread() {
     await refresh()
   }
 
+  const savePost = async (input: NewPostInput) => {
+    if (!postId) return
+    await forumApi.updatePost(postId, {
+      title: input.title,
+      body: input.body,
+      topic: input.topic,
+      flair: input.flair,
+    })
+    await refresh()
+  }
+
+  const removePost = async () => {
+    if (!postId) return
+    await forumApi.deletePost(postId)
+    nav('/forum', { replace: true })
+  }
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1600)
+    } catch {
+      /* clipboard blocked — the URL bar still has the link */
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-5">
-        <div className="h-8 w-32 animate-pulse rounded-lg bg-surface-2" />
-        <Card className="animate-pulse space-y-3 p-5">
-          <div className="h-3.5 w-32 rounded bg-surface-2" />
-          <div className="h-6 w-3/4 rounded bg-surface-2" />
-          <div className="h-3 w-full rounded bg-surface-2" />
-          <div className="h-3 w-5/6 rounded bg-surface-2" />
+        <Skeleton className="h-5 w-32" />
+        <Card className="space-y-3 p-5">
+          <Skeleton className="h-3.5 w-32" />
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-5/6" />
+        </Card>
+        <Card className="space-y-3 p-5">
+          <Skeleton className="h-3.5 w-24" />
+          <Skeleton className="h-3 w-2/3" />
         </Card>
       </div>
     )
@@ -89,7 +150,7 @@ export default function ForumThread() {
       <EmptyState
         icon={<MessageCircle className="size-6" />}
         title="This thread is gone"
-        sub="It may have been removed by a moderator, or the link is wrong."
+        sub="It may have been removed by its author or a moderator, or the link is wrong."
         action={
           <Button variant="secondary" onClick={() => nav('/forum')}>
             Back to forum
@@ -105,7 +166,7 @@ export default function ForumThread() {
         <Button variant="ghost" size="sm" onClick={() => nav('/forum')}>
           <ArrowLeft className="size-4" /> Back to forum
         </Button>
-        <div className="rounded-xl border border-danger/30 bg-danger/10 p-4">
+        <div className="rounded-xl border border-danger/30 bg-danger/8 p-4">
           <p className="text-sm font-medium text-danger">Could not load this thread</p>
           <p className="mt-1 text-xs leading-relaxed text-muted">{error}</p>
           <Button size="sm" variant="secondary" className="mt-3" onClick={refresh}>
@@ -120,13 +181,21 @@ export default function ForumThread() {
   const postAuthor = displayAuthor(post)
   const isOwner = post.authorKey === identityKey()
   const canAccept = isOwner && post.flair === 'Question'
-  const totalComments = post.commentCount
+  const total = post.commentCount
+  const overLimit = draft.length > COMMENT_MAX
 
   const actions: CommentActions = {
     authorName: profile.name,
     votes,
     onVote: (id, value) => void voteOn('comment', id, value),
     onReply: (parentId, body, anon) => addComment(parentId, body, anon),
+    onEdit: async (id, body) => {
+      await forumApi.updateComment(id, body)
+      await refresh()
+    },
+    onDelete: (id) => {
+      void forumApi.deleteComment(id).then(refresh)
+    },
     onReport: (id) => void reportTarget('comment', id),
     reported,
     acceptedId: post.acceptedCommentId,
@@ -135,15 +204,21 @@ export default function ForumThread() {
 
   return (
     <div className="space-y-5">
-      <Link
-        to="/forum"
-        className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-accent"
-      >
-        <ArrowLeft className="size-4" /> Back to forum
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          to="/forum"
+          className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-accent"
+        >
+          <ArrowLeft className="size-4" /> Back to forum
+        </Link>
+        <Button size="sm" variant="ghost" onClick={copyLink}>
+          {copied ? <Check className="size-3.5 text-accent" /> : <Link2 className="size-3.5" />}
+          {copied ? 'Link copied' : 'Copy link'}
+        </Button>
+      </div>
 
       {flagged && (
-        <div className="flex items-start gap-3 rounded-xl border border-danger/30 bg-danger/10 p-4">
+        <div className="anim-in flex items-start gap-3 rounded-xl border border-danger/30 bg-danger/8 p-4">
           <ShieldAlert className="mt-0.5 size-4.5 shrink-0 text-danger" />
           <div>
             <p className="text-sm font-medium text-danger">
@@ -167,11 +242,22 @@ export default function ForumThread() {
             vertical
           />
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge tone="neutral">{post.flair}</Badge>
-              <span className="text-[11px] text-muted">
-                {TOPIC_LABEL[post.topic] ?? post.topic} · {timeAgo(post.createdAt)}
-              </span>
+            <div className="flex items-start gap-2">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                <Badge tone="neutral">{post.flair}</Badge>
+                {post.pinned && <Badge tone="accent">Pinned</Badge>}
+                <span className="text-[11px] text-muted">
+                  {TOPIC_LABEL[post.topic] ?? post.topic} · {timeAgo(post.createdAt)}
+                  {post.editedAt && ` · edited ${timeAgo(post.editedAt)}`}
+                </span>
+              </div>
+              {isOwner && (
+                <OwnerMenu
+                  onEdit={() => setEditing(true)}
+                  onDelete={() => void removePost()}
+                  confirmLabel="Delete this post?"
+                />
+              )}
             </div>
 
             <h1 className="mt-2.5 text-xl font-semibold leading-snug tracking-tight">
@@ -181,29 +267,47 @@ export default function ForumThread() {
             <div className="mt-2 flex items-center gap-2 text-[11px] text-muted">
               <Avatar name={postAuthor.name} anonymous={post.isAnonymous} /> {postAuthor.name} ·{' '}
               {postAuthor.roll}
+              {isOwner && (
+                <span className="rounded border border-line px-1 text-[10px]">you</span>
+              )}
             </div>
 
-            <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-muted">
-              {post.body}
-            </p>
+            <RichText className="mt-4 text-sm leading-relaxed text-muted">{post.body}</RichText>
 
-            <div className="mt-4 flex items-center gap-3">
-              <button
-                onClick={() => void reportTarget('post', post.id)}
-                disabled={reported.includes(post.id)}
-                className="text-[11px] text-muted transition-colors hover:text-danger disabled:hover:text-muted"
-              >
-                {reported.includes(post.id) ? 'Reported' : 'Report post'}
-              </button>
-            </div>
+            {!isOwner && (
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  onClick={() => void reportTarget('post', post.id)}
+                  disabled={reported.includes(post.id)}
+                  className="text-[11px] text-muted transition-colors hover:text-danger disabled:hover:text-muted"
+                >
+                  {reported.includes(post.id) ? 'Reported' : 'Report post'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </Card>
 
       <Card>
         <CardHead
-          title={`${totalComments} ${totalComments === 1 ? 'comment' : 'comments'}`}
+          title={`${total} ${total === 1 ? 'comment' : 'comments'}`}
           icon={<MessageCircle className="size-4" />}
+          action={
+            total > 1 ? (
+              <Tabs
+                label="Sort comments"
+                size="sm"
+                value={sort}
+                onChange={setSort}
+                items={[
+                  { value: 'best', label: 'Best' },
+                  { value: 'new', label: 'Newest' },
+                  { value: 'old', label: 'Oldest' },
+                ]}
+              />
+            ) : undefined
+          }
         />
         <div className="p-5 pt-3.5">
           <div className="flex gap-3">
@@ -213,18 +317,32 @@ export default function ForumThread() {
                 rows={3}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={onDraftKey}
+                aria-invalid={overLimit}
+                aria-label="Add a comment"
                 placeholder="Add to the discussion — interview experiences help the next batch most."
               />
+              {postError && <p className="mt-1.5 text-[11px] text-danger">{postError}</p>}
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                 <AnonToggle value={anonymous} onChange={setAnonymous} name={profile.name} />
-                <Button
-                  size="sm"
-                  variant="primary"
-                  disabled={!draft.trim() || posting}
-                  onClick={submitTopLevel}
-                >
-                  <Send className="size-3.5" /> {posting ? 'Posting…' : 'Comment'}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn(
+                      'font-mono text-[11px]',
+                      overLimit ? 'text-danger' : 'text-muted/70',
+                    )}
+                  >
+                    {draft.length > COMMENT_MAX - 400 && `${draft.length}/${COMMENT_MAX}`}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    disabled={!draft.trim() || overLimit || posting}
+                    onClick={submitTopLevel}
+                  >
+                    <Send className="size-3.5" /> {posting ? 'Posting…' : 'Comment'}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -234,6 +352,20 @@ export default function ForumThread() {
           </div>
         </div>
       </Card>
+
+      <ComposeModal
+        open={editing}
+        mode="edit"
+        onClose={() => setEditing(false)}
+        onSubmit={savePost}
+        authorName={profile.name}
+        initial={{
+          title: post.title,
+          body: post.body,
+          topic: post.topic,
+          flair: post.flair,
+        }}
+      />
     </div>
   )
 }

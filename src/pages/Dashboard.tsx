@@ -25,8 +25,9 @@ import { Progress } from '@/components/ui/Progress'
 import { EmptyState, SectionTitle } from '@/components/ui/Page'
 import { useApp } from '@/context/AppContext'
 import { COMMON_SECTION, ROLE_MAP, type ResourceKind, type RoleId } from '@/data/roles'
-import { RESUME_REVIEW, STREAK } from '@/data/user'
-import { COMPETITIONS, relativeLabel } from '@/data/competitions'
+import { RESUME_REVIEW } from '@/data/user'
+import { daysUntil, relativeLabel } from '@/data/competitions'
+import { useContests } from '@/hooks/useContests'
 import { cn } from '@/lib/cn'
 
 const KIND_ICON: Record<ResourceKind, typeof BookOpen> = {
@@ -173,7 +174,8 @@ function ResourceRow({
 }
 
 export default function Dashboard() {
-  const { profile, done } = useApp()
+  const { profile, done, streak, dailyGoal } = useApp()
+  const { all: competitions } = useContests()
   const roles = profile.targetRoles
   const [active, setActive] = useState<RoleId | null>(roles[0] ?? null)
 
@@ -192,10 +194,11 @@ export default function Dashboard() {
 
   const upcoming = useMemo(
     () =>
-      COMPETITIONS.filter((c) => c.inDays >= 0 && (!active || c.roles.includes(active)))
-        .sort((a, b) => a.inDays - b.inDays)
+      competitions
+        .filter((c) => daysUntil(c.startsAt) >= 0 && (!active || c.roles.includes(active)))
+        .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))
         .slice(0, 4),
-    [active],
+    [competitions, active],
   )
 
   if (!roles.length) {
@@ -249,8 +252,10 @@ export default function Dashboard() {
             <span className="text-[11px] uppercase tracking-wider text-muted">Current streak</span>
             <Flame className="size-4 text-accent" />
           </div>
-          <p className="mt-2 font-mono text-2xl font-semibold">{STREAK.current}d</p>
-          <p className="mt-1 text-[11px] text-muted">Best {STREAK.best}d · {STREAK.todayDone}/{STREAK.todayGoal} today</p>
+          <p className="mt-2 font-mono text-2xl font-semibold">{streak.current}d</p>
+          <p className="mt-1 text-[11px] text-muted">
+            Best {streak.best}d · {streak.todayCount}/{dailyGoal} today
+          </p>
         </Card>
 
         <Link to="/profile">
@@ -273,8 +278,12 @@ export default function Dashboard() {
               <span className="text-[11px] uppercase tracking-wider text-muted">Next deadline</span>
               <Trophy className="size-4 text-accent" />
             </div>
-            <p className="mt-2 truncate text-sm font-semibold">{upcoming[0]?.title ?? 'Nothing scheduled'}</p>
-            <p className="mt-1 text-[11px] text-accent">{upcoming[0] ? relativeLabel(upcoming[0].inDays) : '—'}</p>
+            <p className="mt-2 truncate text-sm font-semibold">
+              {upcoming[0]?.title ?? 'Nothing scheduled'}
+            </p>
+            <p className="mt-1 text-[11px] text-accent">
+              {upcoming[0] ? relativeLabel(upcoming[0].startsAt) : '—'}
+            </p>
           </Card>
         </Link>
       </div>
@@ -352,7 +361,9 @@ export default function Dashboard() {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-[13px] font-medium leading-snug">{c.title}</p>
-                      <Badge tone={c.inDays <= 2 ? 'warn' : 'neutral'}>{relativeLabel(c.inDays)}</Badge>
+                      <Badge tone={daysUntil(c.startsAt) <= 2 ? 'warn' : 'neutral'}>
+                        {relativeLabel(c.startsAt)}
+                      </Badge>
                     </div>
                     <p className="mt-1 text-[11px] text-muted">{c.org} · {c.source}</p>
                   </Link>

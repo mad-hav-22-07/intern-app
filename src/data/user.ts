@@ -65,14 +65,3 @@ export const RESUME_REVIEW = {
     },
   ],
 }
-
-export const STREAK = {
-  current: 12,
-  best: 24,
-  /** last 28 days, 0 = missed, 1..3 = intensity */
-  history: [
-    2, 1, 0, 3, 2, 2, 1, 0, 0, 1, 3, 3, 2, 1, 2, 0, 1, 2, 3, 3, 2, 2, 1, 3, 3, 2, 3, 2,
-  ],
-  todayDone: 2,
-  todayGoal: 3,
-}

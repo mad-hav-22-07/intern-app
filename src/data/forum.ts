@@ -211,6 +211,7 @@ export function seedPosts(): ForumPost[] {
     reportCount: p.reports ?? 0,
     acceptedCommentId: null,
     createdAt: iso(p.hoursAgo),
+    editedAt: null,
   }))
 }
 
@@ -227,6 +228,8 @@ export function seedComments(): ForumComment[] {
       isAnonymous: false,
       score: c.votes,
       createdAt: iso(c.hoursAgo),
+      editedAt: null,
+      deleted: false,
       replies: [],
     })),
   )

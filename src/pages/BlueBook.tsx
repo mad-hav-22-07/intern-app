@@ -269,7 +269,7 @@ export default function BlueBook() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Card className="p-4">
             <div className="space-y-4">
               <div>

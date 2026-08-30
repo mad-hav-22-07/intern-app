@@ -53,54 +53,54 @@ export default function Login() {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1.1fr_1fr]">
       {/* left — pitch */}
-      <div className="glow relative hidden flex-col justify-between border-r border-line bg-surface p-10 lg:flex xl:p-14">
+      <div className="relative hidden flex-col justify-between bg-nav p-10 text-nav-ink lg:flex xl:p-14">
         <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-xl bg-accent text-accent-fg">
+          <span className="grid size-10 place-items-center rounded-xl bg-nav-accent text-nav">
             <Rocket className="size-5" strokeWidth={2.4} />
           </span>
           <div>
             <div className="text-sm font-semibold tracking-tight">Internship Preparation Drive</div>
-            <div className="text-[10px] uppercase tracking-[0.18em] text-accent">IIT Madras</div>
+            <div className="text-[10px] uppercase tracking-[0.18em] text-nav-accent">IIT Madras</div>
           </div>
         </div>
 
         <div className="max-w-lg">
           <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight xl:text-5xl">
             Everything you need for
-            <span className="text-accent"> intern season</span>, in one place.
+            <span className="text-nav-accent"> intern season</span>, in one place.
           </h1>
-          <p className="mt-4 text-sm leading-relaxed text-muted">
+          <p className="mt-4 text-sm leading-relaxed text-nav-muted">
             Built by seniors who went through it, for the batch going through it next. Pick your
             target profiles and the platform shapes itself around them.
           </p>
 
-          <div className="mt-9 grid gap-x-8 gap-y-5 sm:grid-cols-2">
+          <div className="stagger mt-9 grid gap-x-8 gap-y-5 sm:grid-cols-2">
             {HIGHLIGHTS.map(({ icon: Icon, title, body }) => (
               <div key={title} className="flex gap-3">
-                <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-accent-soft text-accent">
+                <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-nav-accent/12 text-nav-accent">
                   <Icon className="size-3.5" />
                 </span>
                 <div>
                   <p className="text-[13px] font-medium">{title}</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-muted">{body}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-nav-muted">{body}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-6 text-xs text-muted">
-          <span><b className="font-mono text-ink">1,240+</b> students</span>
-          <span><b className="font-mono text-ink">15</b> companies analysed</span>
-          <span><b className="font-mono text-ink">7</b> prep tracks</span>
+        <div className="flex items-center gap-6 text-xs text-nav-muted">
+          <span><b className="font-mono text-nav-ink">1,240+</b> students</span>
+          <span><b className="font-mono text-nav-ink">15</b> companies analysed</span>
+          <span><b className="font-mono text-nav-ink">7</b> prep tracks</span>
         </div>
       </div>
 
       {/* right — form */}
-      <div className="glow flex items-center justify-center p-6 sm:p-10">
-        <div className="w-full max-w-sm">
+      <div className="flex items-center justify-center p-6 sm:p-10">
+        <div className="anim-in w-full max-w-sm">
           <div className="mb-8 lg:hidden">
-            <span className="grid size-11 place-items-center rounded-xl bg-accent text-accent-fg">
+            <span className="grid size-11 place-items-center rounded-xl bg-nav text-nav-accent">
               <Rocket className="size-5" strokeWidth={2.4} />
             </span>
             <h1 className="mt-4 text-2xl font-semibold tracking-tight">Internship Preparation Drive</h1>

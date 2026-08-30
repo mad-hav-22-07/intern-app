@@ -1,6 +1,7 @@
 import { requireSupabase } from '@/lib/supabase'
 import { identityKey } from '@/lib/identity'
 import type {
+  EditPostInput,
   ForumComment,
   ForumPost,
   ListOptions,
@@ -27,6 +28,7 @@ type PostRow = {
   report_count: number
   accepted_comment_id: string | null
   created_at: string
+  edited_at: string | null
 }
 
 type CommentRow = {
@@ -40,16 +42,18 @@ type CommentRow = {
   is_anonymous: boolean
   score: number
   created_at: string
+  edited_at: string | null
+  deleted: boolean
 }
 
 const POST_COLUMNS =
-  'id,title,body,topic,flair,author_name,author_roll,author_key,is_anonymous,pinned,score,comment_count,report_count,accepted_comment_id,created_at'
+  'id,title,body,topic,flair,author_name,author_roll,author_key,is_anonymous,pinned,score,comment_count,report_count,accepted_comment_id,created_at,edited_at'
 
 /** Ranking happens client-side, so this caps how many rows that can consider. */
 const PAGE_SIZE = 200
 
 const COMMENT_COLUMNS =
-  'id,post_id,parent_id,body,author_name,author_roll,author_key,is_anonymous,score,created_at'
+  'id,post_id,parent_id,body,author_name,author_roll,author_key,is_anonymous,score,created_at,edited_at,deleted'
 
 const toPost = (r: PostRow): ForumPost => ({
   id: r.id,
@@ -67,6 +71,7 @@ const toPost = (r: PostRow): ForumPost => ({
   reportCount: r.report_count,
   acceptedCommentId: r.accepted_comment_id,
   createdAt: r.created_at,
+  editedAt: r.edited_at,
 })
 
 const toComment = (r: CommentRow): ForumComment => ({
@@ -80,6 +85,8 @@ const toComment = (r: CommentRow): ForumComment => ({
   isAnonymous: r.is_anonymous,
   score: r.score,
   createdAt: r.created_at,
+  editedAt: r.edited_at,
+  deleted: r.deleted ?? false,
   replies: [],
 })
 
@@ -203,6 +210,67 @@ export async function createCommentRemote(
   return toComment(data as CommentRow)
 }
 
+export async function updatePostRemote(id: string, input: EditPostInput): Promise<void> {
+  const sb = requireSupabase()
+  const { error } = await sb.rpc('forum_edit_post', {
+    p_post: id,
+    p_actor: identityKey(),
+    p_title: input.title.trim(),
+    p_body: input.body.trim(),
+    p_topic: input.topic,
+    p_flair: input.flair,
+  })
+  if (error) throw error
+}
+
+export async function deletePostRemote(id: string): Promise<void> {
+  const sb = requireSupabase()
+  const { error } = await sb.rpc('forum_delete_post', { p_post: id, p_actor: identityKey() })
+  if (error) throw error
+}
+
+export async function updateCommentRemote(id: string, body: string): Promise<void> {
+  const sb = requireSupabase()
+  const { error } = await sb.rpc('forum_edit_comment', {
+    p_comment: id,
+    p_actor: identityKey(),
+    p_body: body.trim(),
+  })
+  if (error) throw error
+}
+
+export async function deleteCommentRemote(id: string): Promise<void> {
+  const sb = requireSupabase()
+  const { error } = await sb.rpc('forum_delete_comment', {
+    p_comment: id,
+    p_actor: identityKey(),
+  })
+  if (error) throw error
+}
+
+/** Post / comment / karma totals for this browser's key. */
+export async function myStatsRemote(): Promise<{
+  posts: number
+  comments: number
+  karma: number
+}> {
+  const sb = requireSupabase()
+  const me = identityKey()
+  const [posts, comments] = await Promise.all([
+    sb.from('forum_posts').select('score').eq('author_key', me),
+    sb.from('forum_comments').select('score').eq('author_key', me).eq('deleted', false),
+  ])
+  if (posts.error) throw posts.error
+  if (comments.error) throw comments.error
+
+  const rows = [...(posts.data ?? []), ...(comments.data ?? [])] as { score: number }[]
+  return {
+    posts: posts.data?.length ?? 0,
+    comments: comments.data?.length ?? 0,
+    karma: rows.reduce((sum, r) => sum + r.score, 0),
+  }
+}
+
 export async function myVotesRemote(): Promise<VoteMap> {
   const sb = requireSupabase()
   const { data, error } = await sb.rpc('forum_my_votes', { p_voter: identityKey() })
@@ -255,13 +323,24 @@ export async function reportRemote(target: VoteTarget, reason = 'other'): Promis
   if (error && error.code !== '23505') throw error
 }
 
-/** Fires `onChange` when anyone inserts a post or comment. */
-export function subscribeRemote(onChange: () => void): () => void {
+/**
+ * Fires `onChange` when anyone writes a post or comment. `info.self` is true when
+ * the change came from this browser, so the caller can fold its own writes in
+ * silently instead of showing a "new updates" pill for them.
+ */
+export function subscribeRemote(onChange: (info: { self: boolean }) => void): () => void {
   const sb = requireSupabase()
+  const me = identityKey()
+
+  const handle = (payload: { new?: Record<string, unknown>; old?: Record<string, unknown> }) => {
+    const row = payload.new ?? payload.old ?? {}
+    onChange({ self: row.author_key === me })
+  }
+
   const channel = sb
     .channel('forum-changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'forum_posts' }, onChange)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'forum_comments' }, onChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'forum_posts' }, handle)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'forum_comments' }, handle)
     .subscribe()
 
   return () => {

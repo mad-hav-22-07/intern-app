@@ -2,6 +2,7 @@ import { isSupabaseConfigured } from '@/lib/supabase'
 import * as local from '@/lib/forumLocal'
 import * as remote from '@/lib/forumRemote'
 import type {
+  EditPostInput,
   ForumComment,
   ForumPost,
   ListOptions,
@@ -20,6 +21,7 @@ import type {
  */
 
 export type Author = { name: string; roll: string }
+export type MyStats = { posts: number; comments: number; karma: number }
 
 export const isShared = isSupabaseConfigured
 
@@ -41,6 +43,17 @@ export async function createPost(input: NewPostInput, author: Author): Promise<F
   return isShared ? remote.createPostRemote(input, author) : local.createPostLocal(input, author)
 }
 
+/** Author-only; ownership is enforced by the backend, not by the caller. */
+export async function updatePost(id: string, input: EditPostInput): Promise<void> {
+  if (isShared) await remote.updatePostRemote(id, input)
+  else local.updatePostLocal(id, input)
+}
+
+export async function deletePost(id: string): Promise<void> {
+  if (isShared) await remote.deletePostRemote(id)
+  else local.deletePostLocal(id)
+}
+
 export async function createComment(
   input: NewCommentInput,
   author: Author,
@@ -48,6 +61,17 @@ export async function createComment(
   return isShared
     ? remote.createCommentRemote(input, author)
     : local.createCommentLocal(input, author)
+}
+
+export async function updateComment(id: string, body: string): Promise<void> {
+  if (isShared) await remote.updateCommentRemote(id, body)
+  else local.updateCommentLocal(id, body)
+}
+
+/** Comments with replies become tombstones so the subthread survives. */
+export async function deleteComment(id: string): Promise<void> {
+  if (isShared) await remote.deleteCommentRemote(id)
+  else local.deleteCommentLocal(id)
 }
 
 export async function myVotes(): Promise<VoteMap> {
@@ -70,7 +94,24 @@ export async function report(target: VoteTarget, reason?: string): Promise<void>
   else local.reportLocal(target.id)
 }
 
-/** Calls `onChange` whenever forum content changes, from any browser. */
-export function subscribe(onChange: () => void): () => void {
+/**
+ * Ids this browser has already reported. Local mode keeps its own list; the
+ * remote table is insert-only for `anon`, so duplicates are swallowed there and
+ * the UI only needs to remember the current session.
+ */
+export function myReports(): string[] {
+  return isShared ? [] : local.myReportsLocal()
+}
+
+export async function myStats(): Promise<MyStats> {
+  return isShared ? remote.myStatsRemote() : local.myStatsLocal()
+}
+
+/**
+ * Calls `onChange` whenever forum content changes, from any browser. `info.self`
+ * marks changes this browser caused, so callers can apply those immediately
+ * rather than nagging the reader to refresh their own post.
+ */
+export function subscribe(onChange: (info: { self: boolean }) => void): () => void {
   return isShared ? remote.subscribeRemote(onChange) : local.subscribeLocal(onChange)
 }

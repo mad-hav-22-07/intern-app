@@ -11,7 +11,7 @@ export function Card({
     <div
       className={cn(
         'rounded-2xl border border-line bg-surface shadow-card',
-        hover && 'transition-colors hover:border-accent/45',
+        hover && 'lift hover:border-accent/40',
         className,
       )}
       {...rest}
@@ -44,10 +44,10 @@ export function CardHead({
         )}
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold tracking-tight">{title}</h3>
-          {sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}
+          {sub && <p className="mt-0.5 text-xs leading-relaxed text-muted">{sub}</p>}
         </div>
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   )
 }

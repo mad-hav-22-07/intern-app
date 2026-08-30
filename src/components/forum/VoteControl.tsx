@@ -7,23 +7,28 @@ export function VoteControl({
   onVote,
   vertical,
   compact,
+  disabled,
 }: {
   score: number
   myVote: 1 | -1 | 0
   onVote: (value: 1 | -1) => void
   vertical?: boolean
   compact?: boolean
+  disabled?: boolean
 }) {
   const size = compact ? 'size-4' : 'size-4.5'
+
   return (
     <div className={cn('flex items-center gap-0.5', vertical && 'flex-col')}>
       <button
         type="button"
         onClick={() => onVote(1)}
+        disabled={disabled}
         aria-label="Upvote"
         aria-pressed={myVote === 1}
         className={cn(
-          'rounded-md p-0.5 transition-colors hover:bg-surface-2',
+          'rounded-md p-0.5 transition-all duration-150 hover:bg-accent-soft active:scale-90',
+          'disabled:pointer-events-none disabled:opacity-40',
           myVote === 1 ? 'text-accent' : 'text-muted hover:text-accent',
         )}
       >
@@ -31,8 +36,9 @@ export function VoteControl({
       </button>
 
       <span
+        key={score}
         className={cn(
-          'min-w-8 text-center font-mono text-xs font-medium tabular-nums',
+          'min-w-8 text-center font-mono text-xs font-medium tabular-nums transition-colors',
           myVote === 1 && 'text-accent',
           myVote === -1 && 'text-danger',
         )}
@@ -43,10 +49,12 @@ export function VoteControl({
       <button
         type="button"
         onClick={() => onVote(-1)}
+        disabled={disabled}
         aria-label="Downvote"
         aria-pressed={myVote === -1}
         className={cn(
-          'rounded-md p-0.5 transition-colors hover:bg-surface-2',
+          'rounded-md p-0.5 transition-all duration-150 hover:bg-danger/8 active:scale-90',
+          'disabled:pointer-events-none disabled:opacity-40',
           myVote === -1 ? 'text-danger' : 'text-muted hover:text-danger',
         )}
       >
@@ -56,7 +64,15 @@ export function VoteControl({
   )
 }
 
-export function Avatar({ name, anonymous }: { name: string; anonymous?: boolean }) {
+export function Avatar({
+  name,
+  anonymous,
+  className,
+}: {
+  name: string
+  anonymous?: boolean
+  className?: string
+}) {
   const initials = anonymous
     ? '?'
     : name
@@ -68,7 +84,8 @@ export function Avatar({ name, anonymous }: { name: string; anonymous?: boolean 
     <span
       className={cn(
         'grid size-7 shrink-0 place-items-center rounded-full text-[10px] font-semibold',
-        anonymous ? 'bg-surface-2 text-muted' : 'bg-accent-soft text-accent',
+        anonymous ? 'bg-surface-2 text-muted ring-1 ring-line' : 'bg-accent-soft text-accent',
+        className,
       )}
     >
       {initials}

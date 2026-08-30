@@ -31,6 +31,10 @@ export type ForumComment = {
   isAnonymous: boolean
   score: number
   createdAt: string
+  /** Set the first time the body is changed. */
+  editedAt: string | null
+  /** Removed by its author but kept as a tombstone so the replies under it survive. */
+  deleted: boolean
   /** Built client-side from parentId — the table itself is flat. */
   replies: ForumComment[]
 }
@@ -51,10 +55,12 @@ export type ForumPost = {
   reportCount: number
   acceptedCommentId: string | null
   createdAt: string
+  editedAt: string | null
 }
 
 export type SortMode = 'hot' | 'new' | 'top'
 export type RangeMode = 'today' | 'week' | 'all'
+export type CommentSort = 'best' | 'new' | 'old'
 
 export type ListOptions = {
   topic: TopicId | 'all'
@@ -69,6 +75,13 @@ export type NewPostInput = {
   topic: TopicId
   flair: string
   isAnonymous: boolean
+}
+
+export type EditPostInput = {
+  title: string
+  body: string
+  topic: TopicId
+  flair: string
 }
 
 export type NewCommentInput = {
@@ -89,6 +102,14 @@ export const REPORT_THRESHOLD = 3
 export const ANON_NAME = 'Anonymous'
 export const ANON_ROLL = 'hidden'
 
+export const TITLE_MIN = 5
+export const TITLE_MAX = 200
+export const BODY_MAX = 8000
+export const COMMENT_MAX = 4000
+
+/** The placeholder a comment keeps once its author removes it. */
+export const DELETED_BODY = '[removed by the author]'
+
 /** Posts and comments store the real author; the UI masks it when is_anonymous. */
 export function displayAuthor(x: {
   authorName: string
@@ -100,8 +121,12 @@ export function displayAuthor(x: {
     : { name: x.authorName, roll: x.authorRoll }
 }
 
-/** Flat comment rows -> a reply tree, oldest first at every level. */
-export function buildCommentTree(rows: ForumComment[]): ForumComment[] {
+/** Flat comment rows -> a reply tree. `sort` applies at every level. */
+export function buildCommentTree(
+  rows: ForumComment[],
+  sort: CommentSort = 'best',
+  acceptedId?: string | null,
+): ForumComment[] {
   const byId = new Map<string, ForumComment>()
   for (const r of rows) byId.set(r.id, { ...r, replies: [] })
 
@@ -112,13 +137,25 @@ export function buildCommentTree(rows: ForumComment[]): ForumComment[] {
     else roots.push(r)
   }
 
-  const byAge = (a: ForumComment, b: ForumComment) =>
-    Date.parse(a.createdAt) - Date.parse(b.createdAt)
+  const age = (c: ForumComment) => Date.parse(c.createdAt)
+  const compare = (a: ForumComment, b: ForumComment) => {
+    if (sort === 'new') return age(b) - age(a)
+    if (sort === 'old') return age(a) - age(b)
+    // 'best': score first, oldest wins ties so the original answer stays on top.
+    return b.score - a.score || age(a) - age(b)
+  }
+
   const sortDeep = (list: ForumComment[]) => {
-    list.sort(byAge)
+    list.sort(compare)
     for (const c of list) sortDeep(c.replies)
   }
   sortDeep(roots)
+
+  // The accepted answer always leads, whatever the sort says.
+  if (acceptedId) {
+    const i = roots.findIndex((c) => c.id === acceptedId)
+    if (i > 0) roots.unshift(roots.splice(i, 1)[0])
+  }
   return roots
 }
 

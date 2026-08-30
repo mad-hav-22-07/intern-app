@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowUp, Hash, MessagesSquare, Plus, Search, ShieldAlert } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { ArrowUp, Hash, Loader2, MessagesSquare, Plus, Search, ShieldAlert, X } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Tabs } from '@/components/ui/Tabs'
@@ -16,30 +16,75 @@ import { useForumList, useVotes } from '@/hooks/useForum'
 import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/cn'
 
+const SORTS: SortMode[] = ['hot', 'new', 'top']
+const RANGES: RangeMode[] = ['today', 'week', 'all']
+const TOPIC_IDS = TOPICS.map((t) => t.id)
+
+/** Delays `value` so a search doesn't refetch on every keystroke. */
+function useDebounced<T>(value: T, ms: number): T {
+  const [settled, setSettled] = useState(value)
+  useEffect(() => {
+    const id = setTimeout(() => setSettled(value), ms)
+    return () => clearTimeout(id)
+  }, [value, ms])
+  return settled
+}
+
 export default function Forum() {
-  const { profile } = useApp()
+  const { profile, logActivity } = useApp()
   const nav = useNavigate()
 
-  const [range, setRange] = useState<RangeMode>('week')
-  const [sort, setSort] = useState<SortMode>('hot')
-  const [topic, setTopic] = useState<TopicId | 'all'>('all')
-  const [query, setQuery] = useState('')
+  // Filters live in the URL, so a filtered feed is shareable and Back undoes a
+  // filter change instead of leaving the page.
+  const [params, setParams] = useSearchParams()
+  const sort = (SORTS.find((s) => s === params.get('sort')) ?? 'hot') as SortMode
+  const range = (RANGES.find((r) => r === params.get('range')) ?? 'week') as RangeMode
+  const topicParam = params.get('topic')
+  const topic: TopicId | 'all' =
+    topicParam && TOPIC_IDS.includes(topicParam as TopicId) ? (topicParam as TopicId) : 'all'
+  const urlQuery = params.get('q') ?? ''
+
+  const setParam = useCallback(
+    (key: string, value: string, fallback: string) => {
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (value === fallback) next.delete(key)
+          else next.set(key, value)
+          return next
+        },
+        { replace: true },
+      )
+    },
+    [setParams],
+  )
+
+  const [input, setInput] = useState(urlQuery)
+  const debounced = useDebounced(input, 300)
+
+  // One-way sync: the box drives the URL. Reading the URL back into the box
+  // would fight the user's typing.
+  useEffect(() => {
+    setParam('q', debounced.trim(), '')
+  }, [debounced, setParam])
+
   const [compose, setCompose] = useState(false)
 
   const opts: ListOptions = useMemo(
-    () => ({ topic, range, sort, query }),
-    [topic, range, sort, query],
+    () => ({ topic, range, sort, query: urlQuery }),
+    [topic, range, sort, urlQuery],
   )
 
-  const { posts, counts, loading, error, pending, refresh } = useForumList(opts)
+  const { posts, counts, loading, busy, error, pending, patchScore, refresh } = useForumList(opts)
   const { votes, cast } = useVotes()
+  const listTop = useRef<HTMLDivElement>(null)
 
   const onVote = useCallback(
     async (postId: string, value: 1 | -1) => {
-      await cast({ kind: 'post', id: postId }, value)
-      await refresh()
+      const delta = await cast({ kind: 'post', id: postId }, value)
+      patchScore(postId, delta)
     },
-    [cast, refresh],
+    [cast, patchScore],
   )
 
   const createPost = async (input: NewPostInput) => {
@@ -47,18 +92,30 @@ export default function Forum() {
       name: profile.name,
       roll: profile.rollNo,
     })
-    await refresh()
+    logActivity('forum')
     nav(`/forum/${post.id}`)
   }
 
+  const pullNew = () => {
+    void refresh()
+    listTop.current?.scrollIntoView({ block: 'start' })
+  }
+
   const total = Object.values(counts).reduce((a, b) => a + b, 0)
+  const filtered = topic !== 'all' || range !== 'all' || Boolean(urlQuery)
+
+  const resetFilters = () => {
+    setParams(new URLSearchParams(), { replace: true })
+    setInput('')
+  }
 
   const topicButton = (id: TopicId | 'all', label: string, count: number) => (
     <button
       key={id}
-      onClick={() => setTopic(id)}
+      onClick={() => setParam('topic', id, 'all')}
+      aria-current={topic === id}
       className={cn(
-        'flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-colors',
+        'flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition-all duration-200',
         topic === id
           ? 'bg-accent-soft font-medium text-accent'
           : 'text-muted hover:bg-surface-2 hover:text-ink',
@@ -109,11 +166,12 @@ export default function Forum() {
           </Card>
         </aside>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4" ref={listTop}>
           <div className="flex flex-wrap items-center gap-3">
             <Tabs
+              label="Sort posts"
               value={sort}
-              onChange={setSort}
+              onChange={(v) => setParam('sort', v, 'hot')}
               items={[
                 { value: 'hot', label: 'Hot' },
                 { value: 'new', label: 'New' },
@@ -121,8 +179,9 @@ export default function Forum() {
               ]}
             />
             <Tabs
+              label="Time range"
               value={range}
-              onChange={setRange}
+              onChange={(v) => setParam('range', v, 'week')}
               size="sm"
               items={[
                 { value: 'today', label: 'Today' },
@@ -133,11 +192,21 @@ export default function Forum() {
             <div className="relative min-w-48 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
               <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
                 placeholder="Search posts…"
-                className="pl-9"
+                aria-label="Search posts"
+                className="pl-9 pr-9"
               />
+              {input && (
+                <button
+                  onClick={() => setInput('')}
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -145,12 +214,12 @@ export default function Forum() {
             {[{ id: 'all' as const, label: 'All' }, ...TOPICS].map((t) => (
               <button
                 key={t.id}
-                onClick={() => setTopic(t.id)}
+                onClick={() => setParam('topic', t.id, 'all')}
                 className={cn(
                   'shrink-0 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors',
                   topic === t.id
                     ? 'border-accent/50 bg-accent-soft text-accent'
-                    : 'border-line bg-surface-2 text-muted',
+                    : 'border-line bg-surface text-muted',
                 )}
               >
                 {t.label}
@@ -162,10 +231,18 @@ export default function Forum() {
             <StorageNotice />
           </div>
 
+          <div className="flex min-h-5 items-center justify-between gap-3">
+            <p className="text-[11px] text-muted">
+              {loading ? 'Loading…' : `${posts.length} ${posts.length === 1 ? 'post' : 'posts'}`}
+              {urlQuery && !loading && <> matching “{urlQuery}”</>}
+            </p>
+            {busy && !loading && <Loader2 className="size-3.5 animate-spin text-muted" />}
+          </div>
+
           {pending > 0 && (
             <button
-              onClick={refresh}
-              className="anim-in mx-auto flex items-center gap-2 rounded-full border border-accent/40 bg-accent-soft px-4 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent hover:text-accent-fg"
+              onClick={pullNew}
+              className="anim-pop mx-auto flex items-center gap-2 rounded-full border border-accent/40 bg-accent-soft px-4 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent hover:text-accent-fg"
             >
               <ArrowUp className="size-3.5" />
               {pending} new {pending === 1 ? 'update' : 'updates'} — refresh
@@ -173,7 +250,7 @@ export default function Forum() {
           )}
 
           {error && (
-            <div className="rounded-xl border border-danger/30 bg-danger/10 p-4">
+            <div className="rounded-xl border border-danger/30 bg-danger/8 p-4">
               <p className="text-sm font-medium text-danger">Could not load the forum</p>
               <p className="mt-1 text-xs leading-relaxed text-muted">{error}</p>
               <Button size="sm" variant="secondary" className="mt-3" onClick={refresh}>
@@ -189,7 +266,7 @@ export default function Forum() {
               <PostRowSkeleton />
             </div>
           ) : posts.length ? (
-            <div className="space-y-3">
+            <div className="stagger space-y-3">
               {posts.map((p) => (
                 <PostRow
                   key={p.id}
@@ -202,19 +279,22 @@ export default function Forum() {
           ) : (
             <EmptyState
               icon={<MessagesSquare className="size-6" />}
-              title="Nothing here"
-              sub="No posts match this filter. Try a wider time range or a different topic."
+              title={urlQuery ? `No posts match “${urlQuery}”` : 'Nothing here yet'}
+              sub={
+                filtered
+                  ? 'Try a wider time range, a different topic, or clear the search.'
+                  : 'Be the first to post in this topic.'
+              }
               action={
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setRange('all')
-                    setTopic('all')
-                    setQuery('')
-                  }}
-                >
-                  Reset filters
-                </Button>
+                filtered ? (
+                  <Button variant="secondary" onClick={resetFilters}>
+                    Reset filters
+                  </Button>
+                ) : (
+                  <Button variant="primary" onClick={() => setCompose(true)}>
+                    <Plus className="size-4" /> New post
+                  </Button>
+                )
               }
             />
           )}
