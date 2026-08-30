@@ -61,6 +61,8 @@ type Ctx = {
   signedIn: boolean
   /** Resolves once the session has been restored, so pages never flash the login screen. */
   authLoading: boolean
+  /** Gates the admin portal. Demo mode is always admin; real accounts read profiles.is_admin. */
+  isAdmin: boolean
   signIn: (u: string, p: string) => Promise<{ ok: boolean; error?: string }>
   signOut: () => void
 
@@ -104,6 +106,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // session and this is just a mirror of it.
   const [signedIn, setSignedIn] = useState(() => (auth.isAuthEnabled ? false : read(KEY, false)))
   const [authLoading, setAuthLoading] = useState(auth.isAuthEnabled)
+  // The demo login is the single hardcoded account, so it stands in for the admin.
+  const [isAdmin, setIsAdmin] = useState(!auth.isAuthEnabled)
   const [profile, setProfileState] = useState<Profile>(() => read(PROFILE_KEY, DEFAULT_PROFILE))
   const [done, setDone] = useState<string[]>(() => read(DONE_KEY, ['r-blind75', 'r-os', 'x-guide']))
   const [registered, setRegistered] = useState<string[]>(() => read(CAL_KEY, ['c2', 'c4']))
@@ -126,7 +130,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const adopt = (user: auth.AuthUser | null) => {
       setIdentityKey(user?.id ?? null)
       setSignedIn(Boolean(user))
+      if (!user) setIsAdmin(false)
       if (user) {
+        void auth.isAdminUser(user.id).then(setIsAdmin)
         // The account is the source of truth for identity; everything else the
         // user edits on the profile page stays local.
         setProfileState((prev) => ({
@@ -172,6 +178,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => ({
       signedIn,
       authLoading,
+      isAdmin,
       signIn,
       signOut: () => {
         if (auth.isAuthEnabled) void auth.signOut()
@@ -220,6 +227,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [
       signedIn,
       authLoading,
+      isAdmin,
       signIn,
       profile,
       done,

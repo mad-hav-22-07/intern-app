@@ -27,8 +27,16 @@ export type Competition = {
   team?: string
   tag: CompetitionTag
   url?: string
-  /** Pulled from a live API rather than the curated list. */
+  /** Announced by the source's own API, not by us. */
   live?: boolean
+  /**
+   * Derived from a known fixed schedule rather than announced. LeetCode only
+   * publishes about two weeks ahead, so anything past that is a projection and
+   * must never be shown as if it were confirmed.
+   */
+  projected?: boolean
+  /** Illustrative placeholder content, not a real listing. */
+  sample?: boolean
 }
 
 const HOUR = 3_600_000
@@ -42,23 +50,27 @@ function at(inDays: number, hour = 18, minute = 0): string {
 }
 
 /**
- * Curated listings: the ones a live API can never know about. Insti mails, case
- * comps, workshops. Authored relative to today so the page always has something
- * plausible in view.
+ * Placeholder listings for the categories no public API covers: insti mails, case
+ * comps, workshops.
+ *
+ * These are INVENTED. Titles, prizes and deadlines are illustrative, which is why
+ * every one carries `sample: true` and renders with a "Sample" badge. Replace them
+ * with real listings as they come in; do not let them sit alongside live feed data
+ * looking equally authoritative.
  */
 export const COMPETITIONS: Competition[] = [
-  { id: 'c2', title: 'HUL Ideatrophy 2026', org: 'Hindustan Unilever', source: 'Unstop', roles: ['fmcg', 'consult'], startsAt: at(2, 23, 59), timeLabel: 'Round 1 deadline', prize: '₹4,00,000', team: 'Team of 3', tag: 'Case Comp', url: 'https://unstop.com' },
-  { id: 'c3', title: 'Optiver Trading Challenge', org: 'Optiver', source: 'Unstop', roles: ['quant', 'finance'], startsAt: at(3, 23, 59), timeLabel: 'Registration closes', prize: 'Internship offer', team: 'Individual', tag: 'Contest', url: 'https://unstop.com' },
-  { id: 'c4', title: 'Shaastra Hackathon: Applied AI', org: 'Shaastra, IITM', source: 'Insti Mail', roles: ['aiml', 'sde'], startsAt: at(5, 10, 0), durationMins: 48 * 60, timeLabel: '48 hours', prize: '₹1,50,000', team: 'Team of 4', tag: 'Hackathon' },
-  { id: 'c5', title: 'BCG Ignite Case Challenge', org: 'Boston Consulting Group', source: 'Unstop', roles: ['consult'], startsAt: at(6, 23, 59), timeLabel: 'Submission deadline', prize: 'PPI shortlist', team: 'Team of 2', tag: 'Case Comp', url: 'https://unstop.com' },
-  { id: 'c7', title: 'Kaggle: Demand Forecasting Playground', org: 'Kaggle', source: 'Kaggle', roles: ['aiml'], startsAt: at(9, 23, 59), timeLabel: 'Closes 23:59 UTC', prize: 'Swag + points', team: 'Team of 5', tag: 'Contest', url: 'https://kaggle.com/competitions' },
-  { id: 'c8', title: 'Goldman Sachs Quant Quiz', org: 'Goldman Sachs', source: 'Insti Mail', roles: ['quant', 'finance'], startsAt: at(11, 19, 0), durationMins: 90, timeLabel: '90 min online', prize: 'Interview fast-track', team: 'Individual', tag: 'Quiz' },
-  { id: 'c9', title: 'P&G CEO Challenge: Campus Round', org: 'Procter & Gamble', source: 'Unstop', roles: ['fmcg'], startsAt: at(13, 9, 30), timeLabel: 'Campus round', prize: 'Global finals seat', team: 'Team of 3', tag: 'Case Comp', url: 'https://unstop.com' },
-  { id: 'c10', title: 'Ethos Blockchain Hackathon', org: 'Devfolio', source: 'Devfolio', roles: ['sde', 'aiml'], startsAt: at(16, 10, 0), durationMins: 36 * 60, timeLabel: '36 hours', prize: '$5,000', team: 'Team of 4', tag: 'Hackathon', url: 'https://devfolio.co' },
-  { id: 'c11', title: 'System Design Workshop by alumni', org: 'CDC, IITM', source: 'Insti Mail', roles: ['sde'], startsAt: at(18, 18, 0), durationMins: 120, timeLabel: '2 hours', team: 'Open', tag: 'Workshop' },
-  { id: 'c12', title: 'Resume Review Clinic: Consulting', org: 'CDC, IITM', source: 'Insti Mail', roles: ['consult', 'finance'], startsAt: at(21, 17, 0), timeLabel: 'Slot booking', team: 'Individual', tag: 'Workshop' },
-  { id: 'c13', title: 'Quadeye Puzzle Sprint', org: 'Quadeye', source: 'LinkedIn', roles: ['quant'], startsAt: at(-2, 20, 0), timeLabel: 'Closed', team: 'Individual', tag: 'Contest' },
-  { id: 'c14', title: 'ITC Interrobang Season 12', org: 'ITC Limited', source: 'Unstop', roles: ['fmcg', 'consult'], startsAt: at(-5, 23, 59), timeLabel: 'Closed', prize: '₹6,00,000', team: 'Team of 2', tag: 'Case Comp' },
+  { id: 'c2', sample: true, title: 'HUL Ideatrophy 2026', org: 'Hindustan Unilever', source: 'Unstop', roles: ['fmcg', 'consult'], startsAt: at(2, 23, 59), timeLabel: 'Round 1 deadline', prize: '₹4,00,000', team: 'Team of 3', tag: 'Case Comp', url: 'https://unstop.com' },
+  { id: 'c3', sample: true, title: 'Optiver Trading Challenge', org: 'Optiver', source: 'Unstop', roles: ['quant', 'finance'], startsAt: at(3, 23, 59), timeLabel: 'Registration closes', prize: 'Internship offer', team: 'Individual', tag: 'Contest', url: 'https://unstop.com' },
+  { id: 'c4', sample: true, title: 'Shaastra Hackathon: Applied AI', org: 'Shaastra, IITM', source: 'Insti Mail', roles: ['aiml', 'sde'], startsAt: at(5, 10, 0), durationMins: 48 * 60, timeLabel: '48 hours', prize: '₹1,50,000', team: 'Team of 4', tag: 'Hackathon' },
+  { id: 'c5', sample: true, title: 'BCG Ignite Case Challenge', org: 'Boston Consulting Group', source: 'Unstop', roles: ['consult'], startsAt: at(6, 23, 59), timeLabel: 'Submission deadline', prize: 'PPI shortlist', team: 'Team of 2', tag: 'Case Comp', url: 'https://unstop.com' },
+  { id: 'c7', sample: true, title: 'Kaggle: Demand Forecasting Playground', org: 'Kaggle', source: 'Kaggle', roles: ['aiml'], startsAt: at(9, 23, 59), timeLabel: 'Closes 23:59 UTC', prize: 'Swag + points', team: 'Team of 5', tag: 'Contest', url: 'https://kaggle.com/competitions' },
+  { id: 'c8', sample: true, title: 'Goldman Sachs Quant Quiz', org: 'Goldman Sachs', source: 'Insti Mail', roles: ['quant', 'finance'], startsAt: at(11, 19, 0), durationMins: 90, timeLabel: '90 min online', prize: 'Interview fast-track', team: 'Individual', tag: 'Quiz' },
+  { id: 'c9', sample: true, title: 'P&G CEO Challenge: Campus Round', org: 'Procter & Gamble', source: 'Unstop', roles: ['fmcg'], startsAt: at(13, 9, 30), timeLabel: 'Campus round', prize: 'Global finals seat', team: 'Team of 3', tag: 'Case Comp', url: 'https://unstop.com' },
+  { id: 'c10', sample: true, title: 'Ethos Blockchain Hackathon', org: 'Devfolio', source: 'Devfolio', roles: ['sde', 'aiml'], startsAt: at(16, 10, 0), durationMins: 36 * 60, timeLabel: '36 hours', prize: '$5,000', team: 'Team of 4', tag: 'Hackathon', url: 'https://devfolio.co' },
+  { id: 'c11', sample: true, title: 'System Design Workshop by alumni', org: 'CDC, IITM', source: 'Insti Mail', roles: ['sde'], startsAt: at(18, 18, 0), durationMins: 120, timeLabel: '2 hours', team: 'Open', tag: 'Workshop' },
+  { id: 'c12', sample: true, title: 'Resume Review Clinic: Consulting', org: 'CDC, IITM', source: 'Insti Mail', roles: ['consult', 'finance'], startsAt: at(21, 17, 0), timeLabel: 'Slot booking', team: 'Individual', tag: 'Workshop' },
+  { id: 'c13', sample: true, title: 'Quadeye Puzzle Sprint', org: 'Quadeye', source: 'LinkedIn', roles: ['quant'], startsAt: at(-2, 20, 0), timeLabel: 'Closed', team: 'Individual', tag: 'Contest' },
+  { id: 'c14', sample: true, title: 'ITC Interrobang Season 12', org: 'ITC Limited', source: 'Unstop', roles: ['fmcg', 'consult'], startsAt: at(-5, 23, 59), timeLabel: 'Closed', prize: '₹6,00,000', team: 'Team of 2', tag: 'Case Comp' },
 ]
 
 export const SOURCES: Source[] = [

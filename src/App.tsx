@@ -18,6 +18,7 @@ import MockExam from '@/pages/MockExam'
 import BlueBook from '@/pages/BlueBook'
 import Forum from '@/pages/Forum'
 import Daily from '@/pages/Daily'
+import Admin from '@/pages/Admin'
 import ComingSoon from '@/pages/ComingSoon'
 import ForumThread from '@/pages/ForumThread'
 import NotFound from '@/pages/NotFound'
@@ -59,6 +60,7 @@ export default function App() {
         <Route path="/blue-book" element={<BlueBook />} />
         <Route path="/forum" element={<Forum />} />
         <Route path="/forum/:postId" element={<ForumThread />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="/coming-soon" element={<ComingSoon />} />
         <Route path="*" element={<NotFound />} />
       </Route>

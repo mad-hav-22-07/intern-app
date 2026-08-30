@@ -18,15 +18,16 @@ import {
   Lightbulb,
   Target,
   Zap,
+  ExternalLink,
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { EmptyState, PageHeader } from '@/components/ui/Page'
+import { EmptyState, PageHeader, SectionTitle } from '@/components/ui/Page'
 import { useApp } from '@/context/AppContext'
 import { ROLE_MAP, type RoleId } from '@/data/roles'
 import { KIND_LABEL, type DailyItem, type Mcq } from '@/data/daily'
-import { dailyFor, msUntilTomorrow, solveKey } from '@/lib/daily'
+import { dailyFor, msUntilTomorrow, relatedPractice, solveKey } from '@/lib/daily'
 import { cn } from '@/lib/cn'
 
 const TONE: Record<DailyItem['difficulty'], 'accent' | 'warn' | 'danger'> = {
@@ -113,6 +114,7 @@ function Challenge({ role, item }: { role: RoleId; item: DailyItem }) {
   const { solvedDaily, markDailySolved } = useApp()
   const key = solveKey(role)
   const solved = solvedDaily.includes(key)
+  const related = useMemo(() => relatedPractice(role), [role])
 
   const [showHint, setShowHint] = useState(false)
   const [showApproach, setShowApproach] = useState(false)
@@ -210,6 +212,27 @@ function Challenge({ role, item }: { role: RoleId; item: DailyItem }) {
                 ))}
               </ul>
             )}
+          </div>
+        )}
+
+        {related.length > 0 && (
+          <div className="border-t border-line pt-3.5">
+            <SectionTitle>More like this</SectionTitle>
+            <div className="grid gap-1.5 sm:grid-cols-2">
+              {related.map((q) => (
+                <a
+                  key={q.id}
+                  href={q.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-[12px] transition-colors hover:border-accent/40 hover:bg-accent-soft"
+                >
+                  <span className="min-w-0 flex-1 truncate">{q.title}</span>
+                  <span className="shrink-0 text-[10px] text-muted">{q.source}</span>
+                  <ExternalLink className="size-3 shrink-0 text-muted" />
+                </a>
+              ))}
+            </div>
           </div>
         )}
 

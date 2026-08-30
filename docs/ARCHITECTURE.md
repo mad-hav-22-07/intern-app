@@ -8,6 +8,8 @@ How this codebase is put together, and where to change things.
 - [State](#state)
 - [Accounts](#accounts)
 - [Daily challenges](#daily-challenges)
+- [The question bank](#the-question-bank)
+- [The admin portal](#the-admin-portal)
 - [The forum](#the-forum)
 - [Competitions and the live feeds](#competitions-and-the-live-feeds)
 - [Streaks](#streaks)
@@ -75,6 +77,7 @@ hard refresh. See [Accounts](#accounts).
 | `/blue-book` | `pages/BlueBook` | Last season's placement data, filters, expandable company rows, and a scripted assistant. |
 | `/forum` | `pages/Forum` | The post list. Filters live in the URL. |
 | `/forum/:postId` | `pages/ForumThread` | One thread with its comment tree. |
+| `/admin` | `pages/Admin` | Question bank browser and moderation queue. Gated on `profiles.is_admin`. |
 | `/coming-soon` | `pages/ComingSoon` | Where every not-yet-built control routes to, named via `?feature=`. |
 | `*` | `pages/NotFound` | Unknown paths. |
 
@@ -165,6 +168,52 @@ toward the day's streak.
 
 ---
 
+## The question bank
+
+`data/questionBank.ts` catalogues ~220 practice problems. Every row is a
+**pointer** to the problem on the platform that owns it: title, source,
+difficulty, topics, roles and a URL. The statements are deliberately not copied
+in. They belong to LeetCode, Brainstellar and HackerRank, reproducing them would
+be a licensing problem, and problems get edited over time. Striver's sheet and
+NeetCode are catalogues for the same reason.
+
+| Source | Count | How the links are built |
+|---|---|---|
+| Brainstellar | 101 | Ids and titles read from `brainstellar.com/puzzles` in Aug 2026. Difficulty inferred from the site's own id banding (1-99 easy, 100-199 medium, 200+ hard). |
+| LeetCode | 100 | Hand-picked from the lists that actually appear in campus shortlists. Slugs are stable and form the URL directly. |
+| HackerRank | 6 | Linked at track level, because individual challenge slugs move. |
+| Codeforces | 6 | Tag-filtered problemset queries rather than fixed problem ids, so the link survives the archive growing. |
+| GeeksforGeeks | 5 | CS fundamentals and aptitude sets. |
+
+The daily challenge page pulls four related rows per role via
+`relatedPractice()`, rotating with the date, so the day's question opens onto
+more practice rather than ending.
+
+---
+
+## The admin portal
+
+`/admin`, gated on `isAdmin`. Two sections: browse and filter the question bank
+(by source, difficulty, profile, topic, free text, with coverage counts), and the
+moderation queue of reported forum posts ordered by report count.
+
+Admin is granted **by hand in SQL**:
+
+```sql
+update public.profiles set is_admin = true where roll_no = 'ME23B042';
+```
+
+There is no way to grant it from inside the app, and `freeze_profile_identity`
+restores `is_admin` on any profile update, so a user cannot promote themselves
+through the update policy they legitimately hold on their own row.
+
+The gate is a convenience, not a boundary. An admin sees more, but everything
+they can *do* still goes through the same RLS and RPCs as everyone else, which is
+why removal is not wired up: the current RPCs only let an author delete their own
+content, and changing that needs a real moderator role in the database.
+
+---
+
 ## The forum
 
 The forum is the one feature with a real database, and it is written so that it
@@ -223,7 +272,15 @@ Migrations are in `supabase/migrations/`, applied in order, and both are idempot
 in `data/competitions.ts`:
 
 - **Codeforces** — their official public API, which sends `Access-Control-Allow-Origin: *`, so the browser can read it directly.
-- **LeetCode** — no public REST API exists, so a community mirror is tried first. If it is unreachable, the schedule is *computed* from LeetCode's fixed cadence (Weekly every Sunday 08:00 IST, Biweekly every second Saturday 20:00 IST) anchored on verified contest numbers. The fallback is accurate, not invented, and the UI labels it "schedule" rather than "live".
+- **LeetCode** — no public REST API exists, so a community mirror is tried first. It returns only the contests LeetCode has actually **announced**, which is about two weeks out.
+
+Anything beyond that is *projected* from LeetCode's fixed cadence (Weekly every
+Sunday 08:00 IST, Biweekly every second Saturday 20:00 IST) anchored on verified
+contest numbers. Projections carry `projected: true` and render with a dashed
+border and an **Expected** badge, because a prediction must never be presented as
+a confirmed listing. The curated case comps and insti mails carry `sample: true`
+and a **Sample** badge for the same reason: their titles and prizes are
+illustrative placeholders, not real listings.
 
 Both are cached in `sessionStorage` for 15 minutes and both degrade to the curated
 list on failure. A feed being down never blocks the page.
@@ -302,6 +359,8 @@ for hover, and `skeleton` for loading. All of it is disabled under
 | Change mock exam / interview content | `src/data/exams.ts`, `src/data/interviews.ts` |
 | Change what counts toward a streak | calls to `logActivity()` (see `AppContext`) |
 | Add or edit daily challenges | `src/data/daily.ts`, one array per role |
+| Add practice problems | `src/data/questionBank.ts`; the admin page reads it directly |
+| Make someone an admin | `update public.profiles set is_admin = true where roll_no = '…'` |
 | Change the account rules | `supabase/migrations/0003_accounts.sql` for the real ones, `src/lib/auth.ts` for the form's feedback |
 | Add a page | a component in `src/pages/`, a `<Route>` in `App.tsx`, an entry in `NAV` and `TITLES` in `Shell.tsx` |
 | Mark something as not built yet | link it to `comingSoon('Name of the thing', '/where-back-goes')` |

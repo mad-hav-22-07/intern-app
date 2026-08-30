@@ -199,6 +199,22 @@ export async function updatePassword(password: string): Promise<AuthResult> {
   return { ok: true }
 }
 
+/**
+ * Whether this account is an admin. Read from `profiles`, which the user can
+ * select but not update (`freeze_profile_identity` restores `is_admin`), so a
+ * client cannot promote itself by editing its own row.
+ */
+export async function isAdminUser(userId: string): Promise<boolean> {
+  if (!isAuthEnabled) return false
+  const { data, error } = await client()
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', userId)
+    .maybeSingle()
+  if (error) return false
+  return Boolean(data?.is_admin)
+}
+
 export async function signOut(): Promise<void> {
   await client().auth.signOut()
 }

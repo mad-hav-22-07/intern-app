@@ -15,6 +15,7 @@ import {
   Flame,
   Rocket,
   Zap,
+  ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useApp } from '@/context/AppContext'
@@ -22,7 +23,15 @@ import { heatmap, intensity } from '@/lib/streak'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 
-const NAV = [
+type NavItem = {
+  to: string
+  label: string
+  icon: typeof LayoutDashboard
+  /** Only the dashboard needs exact matching; everything else prefix-matches. */
+  end?: boolean
+}
+
+const NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/daily', label: "Today's Challenge", icon: Zap },
   { to: '/profile', label: 'Profile', icon: UserRound },
@@ -34,6 +43,9 @@ const NAV = [
   { to: '/forum', label: 'Forum', icon: MessagesSquare },
 ]
 
+/** Only rendered for admins. Kept separate so the main nav stays the same for everyone. */
+const ADMIN_NAV: NavItem = { to: '/admin', label: 'Admin', icon: ShieldCheck }
+
 const TITLES: Record<string, string> = {
   '/': 'Dashboard',
   '/daily': "Today's Challenge",
@@ -44,6 +56,7 @@ const TITLES: Record<string, string> = {
   '/mock-exam': 'Mock Exam',
   '/blue-book': 'Blue Book Analysis',
   '/forum': 'Forum',
+  '/admin': 'Admin',
   '/coming-soon': 'Being built',
 }
 
@@ -62,9 +75,12 @@ function Logo() {
 }
 
 function NavItems({ onNavigate }: { onNavigate?: () => void }) {
+  const { isAdmin } = useApp()
+  const items = isAdmin ? [...NAV, ADMIN_NAV] : NAV
+
   return (
     <nav className="flex flex-col gap-0.5">
-      {NAV.map(({ to, label, icon: Icon, end }) => (
+      {items.map(({ to, label, icon: Icon, end }) => (
         <NavLink
           key={to}
           to={to}

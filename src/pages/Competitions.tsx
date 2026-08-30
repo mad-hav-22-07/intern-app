@@ -23,6 +23,7 @@ import {
   RefreshCw,
   Radio,
   Clock,
+  CalendarClock,
 } from 'lucide-react'
 import { Card, CardHead } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -89,6 +90,7 @@ function CompCard({ c, highlight }: { c: Competition; highlight?: boolean }) {
         'p-4 transition-shadow',
         past && 'opacity-55',
         isMine && 'border-accent/40',
+        c.projected && 'border-dashed',
         highlight && 'ring-2 ring-accent/40',
       )}
     >
@@ -100,6 +102,13 @@ function CompCard({ c, highlight }: { c: Competition; highlight?: boolean }) {
               {c.live && <Radio className="size-3 text-accent" />}
               {c.source}
             </span>
+            {/* Never let a projection or a placeholder read as a confirmed listing. */}
+            {c.projected && (
+              <Badge tone="outline" className="border-dashed">
+                <CalendarClock className="size-3" /> Expected
+              </Badge>
+            )}
+            {c.sample && <Badge tone="warn">Sample</Badge>}
           </div>
           <h3 className="mt-2 text-[15px] font-medium leading-snug">{c.title}</h3>
           <p className="mt-0.5 text-xs text-muted">{c.org}</p>
@@ -458,7 +467,7 @@ export default function Competitions() {
       <PageHeader
         title="Competitions"
         icon={<Trophy className="size-5" />}
-        sub="Live contests from Codeforces and LeetCode, plus case comps, hackathons and insti mails, filtered to the profiles you are targeting."
+        sub="Codeforces and LeetCode contests straight from their own APIs. LeetCode only announces about two weeks out, so later dates are marked Expected. Case comps and insti mails are placeholders until real listings replace them."
         actions={
           <>
             <Button variant="secondary" onClick={onRefresh} disabled={refreshing || loading}>

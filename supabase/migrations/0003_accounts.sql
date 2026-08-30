@@ -23,9 +23,15 @@ create table if not exists public.profiles (
   branch      text        not null default '',
   year        text        not null default '',
   cgpa        text        not null default '',
+  is_admin    boolean     not null default false,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
+
+-- Admin is granted by hand in the SQL editor, never through the app:
+--   update public.profiles set is_admin = true where roll_no = 'ME23B042';
+-- The freeze trigger below also stops a user promoting themselves via the
+-- profile update policy.
 
 comment on table public.profiles is
   'One row per account. Created automatically by the handle_new_user trigger.';
@@ -104,6 +110,7 @@ begin
   new.id      := old.id;
   new.email   := old.email;
   new.roll_no := old.roll_no;
+  new.is_admin := old.is_admin;
   new.created_at := old.created_at;
   new.updated_at := now();
   return new;

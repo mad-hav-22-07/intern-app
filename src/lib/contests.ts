@@ -158,7 +158,8 @@ function lcSeries(
       team: 'Individual',
       tag: 'Contest' as const,
       url: 'https://leetcode.com/contest/',
-      live: true,
+      live: false,
+      projected: true,
     }
   })
 }
@@ -199,8 +200,9 @@ async function fetchLeetCode(): Promise<FeedResult> {
       live: true,
     }))
 
-    // The mirror only ever returns the next two. Extend it with the schedule so
-    // the calendar has something to show a month out.
+    // The mirror only ever returns the two contests LeetCode has actually
+    // announced. The rest are projected from the fixed cadence and are tagged as
+    // such, so the UI can show them as "expected" rather than confirmed.
     const seen = new Set(announced.map((c) => c.startsAt.slice(0, 10)))
     const items = [
       ...announced,

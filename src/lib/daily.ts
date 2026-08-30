@@ -1,4 +1,5 @@
 import { DAILY, type DailyItem } from '@/data/daily'
+import { QUESTION_BANK, type BankItem } from '@/data/questionBank'
 import type { RoleId } from '@/data/roles'
 
 /**
@@ -36,6 +37,18 @@ export function dailyFor(role: RoleId, date = new Date()): DailyItem | null {
  */
 export function solveKey(role: RoleId, date = new Date()): string {
   return `${role}:${dayNumber(date)}`
+}
+
+/**
+ * A few more problems in the same vein, so the day's question is a starting point
+ * rather than the whole session. Rotates with the date like the question itself.
+ */
+export function relatedPractice(role: RoleId, count = 4, date = new Date()): BankItem[] {
+  const pool = QUESTION_BANK.filter((q) => q.roles.includes(role))
+  if (!pool.length) return []
+  const start = (dayNumber(date) * count) % pool.length
+  // Wrap around rather than truncating near the end of the pool.
+  return Array.from({ length: Math.min(count, pool.length) }, (_, i) => pool[(start + i) % pool.length])
 }
 
 /** Milliseconds until the next rollover, for the countdown on the page. */
