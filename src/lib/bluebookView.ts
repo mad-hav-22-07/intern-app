@@ -39,3 +39,29 @@ export function cutoffLabel(raw?: string) {
   if (!raw?.trim()) return null
   return NO_CUTOFF.test(raw) ? 'No cutoff' : raw.trim()
 }
+
+/*
+ * Sector labels, tidied.
+ *
+ * Two people researched these independently and landed on 45 distinct labels for
+ * 129 companies — including `Big Tech` and `Big tech`, which are the same chip
+ * with different capitalisation. Rather than rewrite 129 records, the label is
+ * normalised at render: exact synonyms collapse, everything else is left alone.
+ * A long tail of one-off labels is fine — they are descriptive badges, not a
+ * filter — but two spellings of one thing is just untidy.
+ */
+const SECTOR_ALIASES: Record<string, string> = {
+  'big tech': 'Big tech',
+  'enterprise saas': 'SaaS',
+  'enterprise software': 'SaaS',
+  software: 'SaaS',
+  'hedge fund': 'Quant hedge fund',
+  fintech: 'Fintech',
+  'fintech / payments infra': 'Fintech',
+  'financial services': 'Financial services',
+}
+
+export function sectorLabel(raw?: string) {
+  if (!raw?.trim()) return null
+  return SECTOR_ALIASES[raw.trim().toLowerCase()] ?? raw.trim()
+}

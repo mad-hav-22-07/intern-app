@@ -1,0 +1,12 @@
+# The Blue Book source PDFs never leave this machine.
+#
+# Vite only copies `public/` into the build, so these would not be *served*
+# either way — but there is no reason to upload 16 MB of documents stamped
+# "IIT Madras property, not to be shared outside the institute" to a build
+# host. The structured data extracted from them ships in src/data/bluebook/.
+Blue_Book/
+*.pdf
+
+# Not needed for a build.
+notes/
+scripts/solutions/

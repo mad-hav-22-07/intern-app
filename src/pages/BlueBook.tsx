@@ -25,7 +25,9 @@ import { Input } from '@/components/ui/Field'
 import { Progress } from '@/components/ui/Progress'
 import { PageHeader, SectionTitle, EmptyState } from '@/components/ui/Page'
 import { COMPANIES, type Company } from '@/data/bluebook'
-import { YEARS, yearOf, cutoffLabel } from '@/lib/bluebookView'
+import { metaFor } from '@/data/companyMeta'
+import { CompanyLogo } from '@/components/ui/CompanyLogo'
+import { YEARS, yearOf, cutoffLabel, sectorLabel } from '@/lib/bluebookView'
 import { answerableInsights } from '@/lib/bluebookInsights'
 import { ROLES, ROLE_MAP, type RoleId } from '@/data/roles'
 import { useApp } from '@/context/AppContext'
@@ -57,11 +59,13 @@ function Chip({
 
 function CompanyCard({ c }: { c: Company }) {
   const cutoff = cutoffLabel(c.cgpaCutoff)
+  const meta = metaFor(c.name)
   return (
     <Link to={`/blue-book/${c.id}`} className="block min-w-0">
       <Card hover className="flex h-full flex-col p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
+        <div className="flex items-start gap-3">
+          <CompanyLogo name={c.name} domain={meta?.domain} size={36} />
+          <div className="min-w-0 flex-1">
             <p className="truncate text-[14px] font-semibold tracking-tight">{c.name}</p>
             <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-muted">{c.role}</p>
           </div>
@@ -70,6 +74,7 @@ function CompanyCard({ c }: { c: Company }) {
 
         <div className="mt-3 flex flex-wrap gap-1.5">
           <Badge tone="accent">{ROLE_MAP[c.profile].label}</Badge>
+          {sectorLabel(meta?.sector) && <Badge tone="outline">{sectorLabel(meta?.sector)}</Badge>}
           {c.allBranches ? (
             <Badge tone="outline">All branches</Badge>
           ) : (
