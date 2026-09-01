@@ -21,6 +21,9 @@ import {
   Trophy,
   Swords,
   CalendarClock,
+  Code2,
+  Terminal,
+  Maximize2,
 } from 'lucide-react'
 import { Card, CardHead } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -30,6 +33,9 @@ import { Progress, Ring } from '@/components/ui/Progress'
 import { PageHeader, SectionTitle, EmptyState } from '@/components/ui/Page'
 import { Modal } from '@/components/ui/Modal'
 import { EXAMS, FRIENDS, type Exam } from '@/data/exams'
+import { CODING_ROUNDS, LANGS, PROBLEM_MAP, type CodingRound as Round } from '@/data/coding'
+import { EXAM_TEMPLATES, toRound } from '@/data/examTemplates'
+import { CodingRound } from '@/components/exam/CodingRound'
 import { ROLE_MAP } from '@/data/roles'
 import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/cn'
@@ -42,6 +48,11 @@ function Live({ exam, mode, onExit }: { exam: Exam; mode: 'solo' | 'vs'; onExit:
   const [idx, setIdx] = useState(0)
   const [picked, setPicked] = useState<Record<string, number>>({})
   const [flagged, setFlagged] = useState<string[]>([])
+  // Distinct from `picked`: a question you opened and left blank has been seen,
+  // which is not the same claim as one you never scrolled to. The palette used to
+  // conflate the two under "Not visited", so a flagged-but-blank question (which
+  // you plainly did visit, that's how you flagged it) was reported as un-opened.
+  const [visited, setVisited] = useState<string[]>(() => [qs[0].id])
   const [seconds, setSeconds] = useState(exam.minutes * 60)
   const [submitted, setSubmitted] = useState(false)
   const [confirm, setConfirm] = useState(false)
@@ -51,6 +62,10 @@ function Live({ exam, mode, onExit }: { exam: Exam; mode: 'solo' | 'vs'; onExit:
     const t = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000)
     return () => clearInterval(t)
   }, [submitted])
+
+  useEffect(() => {
+    setVisited((v) => (v.includes(qs[idx].id) ? v : [...v, qs[idx].id]))
+  }, [idx, qs])
 
   useEffect(() => {
     if (seconds === 0) setSubmitted(true)
@@ -209,29 +224,46 @@ function Live({ exam, mode, onExit }: { exam: Exam; mode: 'solo' | 'vs'; onExit:
           <Card className="p-4">
             <SectionTitle>Question palette</SectionTitle>
             <div className="grid grid-cols-5 gap-1.5">
-              {qs.map((x, i) => (
-                <button
-                  key={x.id}
-                  onClick={() => setIdx(i)}
-                  className={cn(
-                    'grid aspect-square place-items-center rounded-lg border tabular-nums text-xs transition-colors',
-                    i === idx
-                      ? 'border-accent bg-accent text-accent-fg'
-                      : flagged.includes(x.id)
-                        ? 'border-warn/50 bg-warn/10 text-warn'
-                        : picked[x.id] !== undefined
-                          ? 'border-accent/40 bg-accent-soft text-accent'
-                          : 'border-line bg-surface-2 text-muted',
-                  )}
-                >
-                  {i + 1}
-                </button>
-              ))}
+              {qs.map((x, i) => {
+                const isAnswered = picked[x.id] !== undefined
+                const isFlagged = flagged.includes(x.id)
+                // A question can be visited and left blank without being flagged —
+                // that is not the same state as one never opened, so it gets its
+                // own colour rather than silently falling into "not visited".
+                const isSkipped = !isAnswered && !isFlagged && visited.includes(x.id)
+                const state = isFlagged ? 'flagged' : isAnswered ? 'answered' : isSkipped ? 'skipped' : 'unvisited'
+                return (
+                  <button
+                    key={x.id}
+                    onClick={() => setIdx(i)}
+                    aria-current={i === idx ? 'true' : undefined}
+                    aria-label={`Question ${i + 1}, ${state}${i === idx ? ', current' : ''}`}
+                    className={cn(
+                      'grid aspect-square place-items-center rounded-lg border tabular-nums text-xs transition-colors',
+                      i === idx
+                        ? 'border-accent bg-accent text-accent-fg'
+                        : isFlagged
+                          ? 'border-warn/50 bg-warn/10 text-warn'
+                          : isAnswered
+                            ? 'border-accent/40 bg-accent-soft text-accent'
+                            : isSkipped
+                              ? 'border-danger/40 bg-danger/10 text-danger'
+                              : 'border-line bg-surface-2 text-muted',
+                    )}
+                  >
+                    {i + 1}
+                  </button>
+                )
+              })}
             </div>
             <div className="mt-3.5 space-y-1.5 border-t border-line pt-3 text-[11px] text-muted">
               <p><span className="mr-1.5 inline-block size-2 rounded-sm bg-accent" />Answered · {Object.keys(picked).length}</p>
               <p><span className="mr-1.5 inline-block size-2 rounded-sm bg-warn" />Flagged · {flagged.length}</p>
-              <p><span className="mr-1.5 inline-block size-2 rounded-sm bg-line" />Not visited · {qs.length - Object.keys(picked).length}</p>
+              <p>
+                <span className="mr-1.5 inline-block size-2 rounded-sm bg-danger" />
+                Visited, skipped · {qs.filter((x) => !flagged.includes(x.id) && picked[x.id] === undefined && visited.includes(x.id)).length}
+              </p>
+              <p><span className="mr-1.5 inline-block size-2 rounded-sm bg-line" />Not visited · {qs.length - visited.length}</p>
             </div>
             <Button variant="secondary" size="sm" className="mt-3.5 w-full" onClick={() => setConfirm(true)}>
               Submit exam
@@ -271,6 +303,8 @@ export default function MockExam() {
   const [mode, setMode] = useState<'solo' | 'vs'>('solo')
   const [scope, setScope] = useState<'mine' | 'all'>('mine')
   const [active, setActive] = useState<Exam | null>(null)
+  const [coding, setCoding] = useState<Round | null>(null)
+  const [tier, setTier] = useState<Round['difficulty'] | null>(null)
   const [challenge, setChallenge] = useState<Exam | null>(null)
 
   const list = useMemo(
@@ -279,6 +313,7 @@ export default function MockExam() {
   )
 
   if (active) return <Live exam={active} mode={mode} onExit={() => setActive(null)} />
+  if (coding) return <CodingRound round={coding} onExit={() => setCoding(null)} />
 
   return (
     <div className="space-y-6">
@@ -288,6 +323,108 @@ export default function MockExam() {
         preview
         sub="Timed, proctored problem sets. Take them alone, or put one up against your friends and see who folds under the clock."
       />
+
+      <Card className="border-accent/25">
+        <div className="flex flex-wrap items-center justify-between gap-4 p-5">
+          <div className="flex items-start gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
+              <Code2 className="size-4" />
+            </span>
+            <div>
+              <p className="text-[13px] font-semibold">Just want to practise?</p>
+              <p className="mt-0.5 max-w-lg text-xs leading-relaxed text-muted">
+                Every problem below is also open on its own, with the same editor and judge and no
+                clock. Rounds are for pressure; practice is for learning them in the first place.
+              </p>
+            </div>
+          </div>
+          <Link to="/practice">
+            <Button variant="secondary" size="sm">Open the problem list</Button>
+          </Link>
+        </div>
+      </Card>
+
+      <section>
+        <SectionTitle
+          right={
+            <span className="text-[11px] text-muted">
+              <Maximize2 className="mr-1 inline size-3" /> Fullscreen · live judge
+            </span>
+          }
+        >
+          Coding rounds
+        </SectionTitle>
+
+        <div className="mb-3 flex flex-wrap items-center gap-1.5">
+          {([null, 'Easy', 'Medium', 'Hard'] as const).map((t) => (
+            <button
+              key={t ?? 'all'}
+              onClick={() => setTier(t)}
+              className={cn(
+                'rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors',
+                tier === t
+                  ? 'border-accent/50 bg-accent-soft text-accent'
+                  : 'border-line bg-surface-2 text-muted hover:text-ink',
+              )}
+            >
+              {t ?? 'All tiers'}
+            </button>
+          ))}
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {/*
+            * Templates first, then the older hand-made rounds. A template is a
+            * designed simulation of a real assessment; the originals are kept
+            * because their problem mixes are still good practice.
+            */}
+          {[...EXAM_TEMPLATES.map(toRound), ...CODING_ROUNDS]
+            .filter((r) => scope === 'all' || profile.targetRoles.includes(r.role))
+            .filter((r) => !tier || r.difficulty === tier)
+            .map((r) => (
+            <Card key={r.id} hover className="flex flex-col p-5">
+              <div className="flex items-start justify-between gap-2">
+                <Badge tone="accent">{ROLE_MAP[r.role].label}</Badge>
+                <Badge tone={r.difficulty === 'Hard' ? 'danger' : r.difficulty === 'Medium' ? 'warn' : 'neutral'}>
+                  {r.difficulty}
+                </Badge>
+              </div>
+              <h3 className="mt-3 text-[15px] font-medium leading-snug">{r.title}</h3>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted">
+                <span className="flex items-center gap-1"><Clock className="size-3.5" /> {r.minutes} min</span>
+                <span>{r.problemIds.length} problem{r.problemIds.length > 1 ? 's' : ''}</span>
+                <span>{r.attempts.toLocaleString()} attempts</span>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {r.problemIds.map((id) => (
+                  <Badge key={id} tone="outline">{PROBLEM_MAP[id]?.title ?? id}</Badge>
+                ))}
+              </div>
+
+              <div className="mt-4 flex-1">
+                <div className="mb-1 flex items-baseline justify-between text-[11px]">
+                  <span className="text-muted">Batch average</span>
+                  <span className="tabular-nums">{r.avgScore}%</span>
+                </div>
+                <Progress value={r.avgScore} />
+                {r.yourBest !== undefined && (
+                  <p className="mt-2 text-[11px] text-accent">Your best · {r.yourBest}%</p>
+                )}
+              </div>
+
+              <Button size="sm" variant="primary" className="mt-4 w-full" onClick={() => setCoding(r)}>
+                <Code2 className="size-3.5" /> Start coding round
+              </Button>
+              <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-[10px] text-muted">
+                <Terminal className="size-3" />
+                {LANGS.map((l) => l.label.split(' ')[0]).join(' · ')}
+              </p>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <SectionTitle>Aptitude and MCQ papers</SectionTitle>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <button onClick={() => setMode('solo')} className="text-left">

@@ -19,6 +19,12 @@ export type Resource = {
   url?: string
   /** rough time investment, shown as a chip */
   effort?: string
+  /**
+   * A `StudyTrack` id from `data/quant.ts`. When present the dashboard row shows
+   * how far through the material you are and links to the per-item tracker
+   * instead of behaving like a single checkbox.
+   */
+  track?: string
 }
 
 export type Section = {
@@ -55,20 +61,42 @@ export const ROLES: Role[] = [
         hint: 'The single highest-leverage block. Start here on day one.',
         resources: [
           {
-            id: 'r-striver',
-            title: "Striver's Ultimate DSA Sheet (A2Z)",
-            by: 'takeUforward',
-            kind: 'sheet',
-            note: 'Full coverage, topic-ordered. The backbone of the SDE track.',
-            effort: '10-12 weeks',
-          },
-          {
             id: 'r-blind75',
             title: 'NeetCode Blind 75',
             by: 'NeetCode',
             kind: 'sheet',
-            note: 'Use for quick revision in the last 2 weeks before a shortlist.',
-            effort: '2 weeks',
+            note: 'The 75 that cover every pattern once. Start here, and use it again for revision in the last fortnight before a shortlist.',
+            url: 'https://neetcode.io/practice',
+            effort: '4-6 weeks',
+            track: 'neetcode-75',
+          },
+          {
+            id: 'r-neetcode150',
+            title: 'NeetCode 150',
+            by: 'NeetCode',
+            kind: 'sheet',
+            note: 'The 75 plus the depth. This is the one to actually finish if you have a semester.',
+            url: 'https://neetcode.io/practice',
+            effort: '10-12 weeks',
+            track: 'neetcode-150',
+          },
+          {
+            id: 'r-neetcode250',
+            title: 'NeetCode 250',
+            by: 'NeetCode',
+            kind: 'sheet',
+            note: 'Only once 150 is done and you want more reps per pattern rather than more patterns.',
+            url: 'https://neetcode.io/practice',
+            effort: 'ongoing',
+            track: 'neetcode-250',
+          },
+          {
+            id: 'r-practice',
+            title: 'Solve here, in the browser',
+            kind: 'platform',
+            note: 'Our own problems, with a real judge in Python, C++, Java or JavaScript. No account, no setup.',
+            url: '/practice',
+            effort: 'ongoing',
           },
           {
             id: 'r-cpcontest',
@@ -86,7 +114,21 @@ export const ROLES: Role[] = [
         resources: [
           { id: 'r-os', title: 'Operating Systems', by: 'GeeksforGeeks', kind: 'doc', effort: '2 weeks' },
           { id: 'r-cn', title: 'Computer Networks', by: 'GeeksforGeeks', kind: 'doc', effort: '2 weeks' },
-          { id: 'r-sql', title: 'SQL & DBMS', kind: 'doc', note: 'Joins, indexing, normalisation, transactions.', effort: '2 weeks' },
+          {
+            id: 'r-sql',
+            title: 'SQL & DBMS',
+            kind: 'doc',
+            note: 'Joins, indexing, normalisation, transactions. The theory half of the round.',
+            effort: '2 weeks',
+          },
+          {
+            id: 'r-sql-practice',
+            title: 'SQL problems, in the browser',
+            kind: 'platform',
+            note: 'The other half: actually writing the query. Judged against a real SQLite, same as the coding problems.',
+            url: '/practice',
+            effort: 'ongoing',
+          },
         ],
       },
       {
@@ -109,19 +151,127 @@ export const ROLES: Role[] = [
       {
         id: 'quant-prob',
         title: 'Probability & Statistics',
-        hint: 'Non-negotiable. Every quant round opens here.',
+        hint: 'Non-negotiable. Every quant round opens here. Theory first, then the two problem books.',
         resources: [
-          { id: 'q-blitzstein', title: 'Introduction to Probability', by: 'Blitzstein & Hwang', kind: 'book', effort: '8 weeks' },
-          { id: 'q-fifty', title: 'Fifty Challenging Problems in Probability', by: 'Mosteller', kind: 'book', effort: '3 weeks' },
-          { id: 'q-heard', title: 'Heard on the Street', by: 'Timothy Crack', kind: 'book', note: 'Classic interview question bank.', effort: '4 weeks' },
+          {
+            id: 'q-mit-prob',
+            title: 'Introduction to Probability (MIT 6.041)',
+            by: 'Bertsekas & Tsitsiklis',
+            kind: 'course',
+            note: 'The theory, free on OCW, with the authors\u2019 own 77-page summary notes. Start here if puzzles keep beating you on the setup rather than the algebra.',
+            url: 'https://ocw.mit.edu/courses/res-6-012-introduction-to-probability-spring-2018/',
+            effort: '10-12 weeks',
+            track: 'mit-prob',
+          },
+          {
+            id: 'q-fifty',
+            title: 'Fifty Challenging Problems in Probability',
+            by: 'Mosteller',
+            kind: 'book',
+            note: 'Eighty pages, 56 problems, and most of a quant probability interview inside them.',
+            url: 'https://store.doverpublications.com/products/9780486653556',
+            effort: '3 weeks',
+            track: 'mosteller',
+          },
+          {
+            id: 'q-heard',
+            title: 'Heard on the Street',
+            by: 'Timothy Crack',
+            kind: 'book',
+            note: 'Real questions from real Wall Street interviews. The standard book for trading desks.',
+            url: 'https://www.amazon.com/dp/1991155484',
+            effort: '4-6 weeks',
+            track: 'hots',
+          },
+          {
+            id: 'q-stat110',
+            title: 'Statistics 110: Probability',
+            by: 'Joe Blitzstein · Harvard',
+            kind: 'course',
+            note: '34 lectures on YouTube plus Harvard\u2019s own practice sets. The friendlier route through the same material as 6.041.',
+            url: 'https://www.youtube.com/playlist?list=PL2SOU6wwxB0uwwH80KTQ6ht66KWxbzTIo',
+            effort: '10 weeks',
+            track: 'stat110',
+          },
+          {
+            id: 'q-blitzstein',
+            title: 'Introduction to Probability',
+            by: 'Blitzstein & Hwang',
+            kind: 'book',
+            note: 'The textbook Stat 110 is built on, free from the authors. The long way round \u2014 worth it with a full semester, skip it with six weeks.',
+            effort: '8 weeks',
+            track: 'blitzstein-hwang',
+          },
+          {
+            id: 'q-ross',
+            title: 'A First Course in Probability',
+            by: 'Sheldon Ross',
+            kind: 'book',
+            note: 'The standard undergraduate text. Use it as a reference when one chapter of the others will not go in.',
+            effort: 'reference',
+            track: 'ross-fcp',
+          },
+          {
+            id: 'q-wasserman',
+            title: 'All of Statistics',
+            by: 'Larry Wasserman',
+            kind: 'book',
+            note: 'Where you go once probability is solid and the questions turn to inference, estimation and regression.',
+            effort: '8 weeks',
+            track: 'wasserman-aos',
+          },
         ],
       },
       {
         id: 'quant-puzzles',
         title: 'Puzzles & Brainteasers',
+        hint: 'Do Brainstellar end to end before you buy anything else.',
         resources: [
-          { id: 'q-brainstellar', title: 'Brainstellar puzzles', kind: 'platform', note: 'Sorted by difficulty, closest to real interview style.', effort: 'ongoing' },
-          { id: 'q-quantbox', title: 'QuantBox puzzle sets', kind: 'platform', effort: 'ongoing' },
+          {
+            id: 'q-brainstellar',
+            title: 'Brainstellar puzzles',
+            by: 'brainstellar.com',
+            kind: 'platform',
+            note: 'All 101, in the site\u2019s own four tiers. Free, with written solutions.',
+            url: 'https://brainstellar.com/',
+            effort: 'ongoing',
+            track: 'brainstellar',
+          },
+          {
+            id: 'q-puzzledquant',
+            title: 'PuzzledQuant',
+            by: 'puzzledquant.com',
+            kind: 'platform',
+            note: 'Company-tagged puzzles. Use it after Brainstellar stops surprising you.',
+            url: 'https://www.puzzledquant.com/',
+            effort: 'ongoing',
+            track: 'puzzledquant',
+          },
+        ],
+      },
+      {
+        id: 'quant-mental',
+        title: 'Mental Maths',
+        hint: 'The first screen at most trading firms, and the one people skip until the week before.',
+        resources: [
+          {
+            id: 'q-80in8',
+            title: '80 in 8 arithmetic drill',
+            by: 'Optiver-style',
+            kind: 'platform',
+            note: '80 questions, 8 minutes, no calculator. Pure drill \u2014 a session a day until it is reflex.',
+            url: 'https://80in8.netlify.app/',
+            effort: '10 min a day',
+            track: 'mental-math',
+          },
+          {
+            id: 'q-zetamac',
+            title: 'Zetamac arithmetic game',
+            kind: 'platform',
+            note: 'The 120-second drill everyone quotes their score from.',
+            url: 'https://arithmetic.zetamac.com/',
+            effort: 'ongoing',
+          },
         ],
       },
       {
@@ -129,7 +279,16 @@ export const ROLES: Role[] = [
         title: 'Coding & Maths',
         resources: [
           { id: 'q-cf', title: 'Codeforces contest alerts', kind: 'alert', note: 'Live feed lands in the Competitions tab.' },
-          { id: 'q-dsa', title: "Striver's Ultimate DSA Sheet", kind: 'sheet', note: 'Quant coding rounds are usually easy-medium DSA.', effort: '6 weeks' },
+          {
+            id: 'q-dsa',
+            title: 'NeetCode Blind 75',
+            by: 'NeetCode',
+            kind: 'sheet',
+            note: 'Quant coding rounds are usually easy-medium DSA. The 75 is more than enough.',
+            url: 'https://neetcode.io/practice',
+            effort: '4-6 weeks',
+            track: 'neetcode-75',
+          },
           { id: 'q-linalg', title: 'Linear Algebra & Calculus refresher', kind: 'book', effort: '3 weeks' },
         ],
       },
@@ -223,7 +382,14 @@ export const ROLES: Role[] = [
         title: 'Coding & Data',
         resources: [
           { id: 'a-py', title: 'Python practice platform', kind: 'platform', effort: 'ongoing' },
-          { id: 'a-sql', title: 'SQL for data roles', kind: 'sheet', note: 'Window functions and CTEs come up constantly.', effort: '2 weeks' },
+          {
+            id: 'a-sql',
+            title: 'SQL problems, in the browser',
+            kind: 'platform',
+            note: 'Joins, aggregation, window functions and CTEs, judged against a real SQLite. Window functions come up constantly in data interviews.',
+            url: '/practice',
+            effort: '2 weeks',
+          },
           { id: 'a-pandas', title: 'Pandas / NumPy drills', kind: 'sheet', effort: '2 weeks' },
         ],
       },

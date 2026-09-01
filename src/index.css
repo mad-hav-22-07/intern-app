@@ -279,3 +279,31 @@
     transform: none;
   }
 }
+
+/*
+ * Code. The app is otherwise a two-colour system, but source needs more than two
+ * colours to be readable at 13px, so this is the one place other hues appear.
+ * They are all desaturated enough to sit next to the green without fighting it.
+ */
+:root {
+  --code-key: #0b7040;
+  --code-str: #9a4d0f;
+  --code-num: #1f5eb8;
+  --code-com: #8a978f;
+}
+
+.tk-key { color: var(--code-key); font-weight: 500; }
+.tk-str { color: var(--code-str); }
+.tk-num { color: var(--code-num); }
+.tk-com { color: var(--code-com); font-style: italic; }
+
+/*
+ * The editor's text is transparent — only its caret and selection are visible,
+ * with the colours coming from the highlighted layer behind it. The global
+ * green ::selection would therefore paint solid blocks over the code, so the
+ * editor gets a translucent one instead.
+ */
+.code-input::selection {
+  background: rgba(15, 145, 82, 0.22);
+  color: transparent;
+}

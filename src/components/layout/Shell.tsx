@@ -15,6 +15,7 @@ import {
   Flame,
   Rocket,
   Zap,
+  Code2,
   ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
@@ -31,16 +32,23 @@ type NavItem = {
   end?: boolean
 }
 
+// Order follows what a student actually does, most-frequent first: check in, do
+// the day's work, then the less-routine research and social tabs. Profile sits
+// near the bottom with Logout rather than up top, since the header avatar
+// already gives one-click access to it and it isn't part of the daily loop.
 const NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/daily', label: "Today's Challenge", icon: Zap },
-  { to: '/profile', label: 'Profile', icon: UserRound },
+  { to: '/practice', label: 'Practice', icon: Code2 },
   { to: '/friends', label: 'Friends', icon: Users },
   { to: '/competitions', label: 'Competitions', icon: Trophy },
   { to: '/mock-interview', label: 'Mock Interview', icon: Mic },
   { to: '/mock-exam', label: 'Mock Exam', icon: FileCheck2 },
-  { to: '/blue-book', label: 'Blue Book Analysis', icon: BookMarked },
+  // Matches the page's own title (`BlueBook.tsx`'s `<PageHeader title="Blue Book">`)
+  // rather than repeating "Analysis" — the page already says what it does.
+  { to: '/blue-book', label: 'Blue Book', icon: BookMarked },
   { to: '/forum', label: 'Forum', icon: MessagesSquare },
+  { to: '/profile', label: 'Profile', icon: UserRound },
 ]
 
 /** Only rendered for admins. Kept separate so the main nav stays the same for everyone. */
@@ -53,12 +61,25 @@ const TITLES: Record<string, string> = {
   '/friends': 'Friends',
   '/competitions': 'Competitions',
   '/mock-interview': 'Mock Interview',
+  '/practice': 'Practice',
   '/mock-exam': 'Mock Exam',
-  '/blue-book': 'Blue Book Analysis',
+  '/blue-book': 'Blue Book',
   '/forum': 'Forum',
   '/admin': 'Admin',
   '/coming-soon': 'Being built',
 }
+
+/**
+ * Fallback for routes one level below a nav item: `/forum/:postId`,
+ * `/blue-book/:companyId`, `/study/:trackId`, `/practice/:problemId` and
+ * `/practice/sql/:problemId` (which still starts with `/practice`).
+ */
+const SECTION_TITLES: [string, string][] = [
+  ['/forum', 'Forum'],
+  ['/blue-book', 'Blue Book'],
+  ['/study', 'Study tracker'],
+  ['/practice', 'Practice'],
+]
 
 function Logo() {
   return (
@@ -171,6 +192,15 @@ export default function Shell() {
 
   useEffect(() => setOpen(false), [loc.pathname])
 
+  // React Router does not reset scroll on navigation the way a full page load
+  // does. Without this, opening a short page while scrolled deep into a long
+  // one lands you wherever the browser clamps that old offset to — usually the
+  // new page's footer — instead of its top. `instant` skips the global smooth-
+  // scroll behaviour so this reads as a fresh page, not a scroll animation.
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [loc.pathname])
+
   // The drawer is a fixed overlay; the page behind it must not scroll with it.
   useEffect(() => {
     if (!open) return
@@ -180,7 +210,32 @@ export default function Shell() {
     }
   }, [open])
 
-  const title = TITLES[loc.pathname] ?? (loc.pathname.startsWith('/forum') ? 'Forum' : '')
+  // Same escape hatch as the Modal: a drawer that only closes via the backdrop
+  // or the X is a keyboard trap for anyone tabbing through on mobile-width desktop.
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  // TITLES only has the exact routes that appear in the nav. Anything one level
+  // deeper — a thread, a company writeup, a single problem, a study track — falls
+  // back to its section's name so the header is never left blank; the page body
+  // is where the specific title (thread subject, company name...) actually shows.
+  // Nothing matching either map means the wildcard `*` route caught it, i.e. `NotFound`.
+  const title =
+    TITLES[loc.pathname] ??
+    SECTION_TITLES.find(([prefix]) => loc.pathname.startsWith(prefix))?.[1] ??
+    'Not found'
+
+  // The tab title otherwise never changes from whatever index.html shipped with,
+  // so every route in history and every open tab reads identically. Bookmarks
+  // and alt-tab both need better than that. `title` is never empty (see above),
+  // so there is always a real section name to lead with.
+  useEffect(() => {
+    document.title = `${title} · Internship Prep`
+  }, [title])
 
   const sidebar = (
     <div className="pad-safe-b flex h-full flex-col gap-6 bg-nav p-4">

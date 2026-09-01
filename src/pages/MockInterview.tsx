@@ -233,9 +233,12 @@ function Session({ round, role, onExit }: { round: Round; role: RoleId; onExit: 
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && answer()}
               placeholder="Type your answer. Think out loud, the way you would speak it."
+              aria-label="Your answer"
               autoFocus
             />
-            <Button variant="primary" onClick={answer} disabled={!input.trim()}>
+            {/* Icon-only: the visible label is the send icon, so a screen reader
+                needs an explicit name instead of falling back to nothing. */}
+            <Button variant="primary" onClick={answer} disabled={!input.trim()} aria-label="Send answer">
               <Send className="size-4" />
             </Button>
           </div>

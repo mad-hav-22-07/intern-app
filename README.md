@@ -31,8 +31,11 @@ editing and deleting your own content, voting one-per-person, anonymous posting,
 reporting with an auto-flag threshold, accepted answers, Hot/New/Top sorting,
 full-text search, filters kept in the URL, and live updates across browsers.
 
-**Live over the network:** upcoming Codeforces rounds and LeetCode contests. Both
-are cached for 15 minutes and fall back cleanly when a source is down.
+**Live over the network:** upcoming Codeforces rounds and LeetCode contests, both
+cached for 15 minutes and falling back cleanly when a source is down; and the
+compiler behind the coding rounds, which is a real Judge0 instance running real
+Python, C++ and Java. JavaScript is judged in the browser, so that language keeps
+working with no network at all.
 
 **Real accounts, when Supabase is connected:** sign-up restricted to
 `@smail.iitm.ac.in`, email confirmation before the account works, one account per
@@ -40,13 +43,37 @@ address and per roll number, and password reset by emailed link. Without Supabas
 the login falls back to a labelled demo account.
 
 **Real, but stored only in this browser:** profile editing, target roles,
-resource check-offs, the daily challenge per profile, the streak and activity
-heatmap, the competition calendar plus
+resource check-offs, the study trackers (**1069 individually tickable items**
+across 13 tracks — NeetCode 75/150/250, Brainstellar, Heard on the Street,
+Mosteller, Ross, Wasserman, Blitzstein & Hwang, Harvard Stat 110, MIT 6.041 and
+the mental-maths drill), which problems you have solved, the daily challenge per
+profile, the streak and activity heatmap, the competition calendar plus
 genuine `.ics` and Google Calendar export, Blue Book filters, the mock exam timer and
 scoring, and the friends leaderboard.
 
+**Real, and worth calling out:** the judge. **28 problems** you can actually
+solve, written from scratch, in a LeetCode-style editor — you implement a method
+in **Python, C++ (17/20/23), Java, JavaScript, Go, Rust, TypeScript or C#**, it
+gets called with real arguments, and your return value is compared against hidden
+testcases. Editable testcase box, per-case runtimes, your own `print` output
+shown back to you. Plus **six SQL problems** run against a real SQLite.
+
+Two ways in. **Practice** (`/practice`) is the filterable problem list with no
+clock — coding and SQL behind one switch — and **Mock Exam** wraps the editor in
+a proctored round: fullscreen gate, timer, and proctoring that
+genuinely counts fullscreen exits, tab switches and blocked pastes rather than
+pretending to. Mock Exam also carries **eight exam templates** at Easy / Medium /
+Hard for SDE and Quant, each a deliberate simulation of a real assessment rather
+than an arbitrary pile of problems.
+
+Every problem is verified in all four languages before it ships — `npm run
+verify:problems` checks that each starter compiles, that no starter accidentally
+solves its own problem, and that four independent reference implementations agree
+character-for-character on every expected value.
+
 **Deliberately scripted:** the resume AI score, the Blue Book assistant's answers,
-the mock interviewer's questions, and proctoring. Each says so on screen.
+the mock interviewer's questions, and the proctoring badge on the *MCQ* papers
+(the coding rounds enforce theirs for real). Each says so on screen.
 
 **Not built yet:** anything that links to `/coming-soon`. Those controls exist in the
 design but are not wired up, so they route to a page that says which piece is

@@ -73,6 +73,12 @@ type Ctx = {
   /** resource ids the user has ticked off */
   done: string[]
   toggleDone: (id: string) => void
+  /**
+   * Tick or clear a whole batch at once — a chapter of a book, a difficulty band
+   * of puzzles. Deliberately does *not* touch the activity log: see the note on
+   * the implementation.
+   */
+  setManyDone: (ids: string[], value: boolean) => void
 
   /** competition ids the user has committed to; the only things on the calendar */
   registered: string[]
@@ -203,6 +209,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const had = done.includes(id)
         logActivity('resource', had ? -1 : 1)
         setDone((prev) => (had ? prev.filter((x) => x !== id) : [...prev, id]))
+      },
+      // Bulk marking is bookkeeping, not studying. Someone hitting "mark all" on
+      // a chapter is almost always recording work they did before they started
+      // using this, and crediting 50 items to *today* would both misdate that
+      // work and turn the daily goal into a one-click formality. Individual
+      // ticks are the honest signal, and those still log.
+      setManyDone: (ids, value) => {
+        setDone((prev) => {
+          if (!value) return prev.filter((x) => !ids.includes(x))
+          const set = new Set(prev)
+          for (const id of ids) set.add(id)
+          return [...set]
+        })
       },
       registered,
       toggleRegistered: (id) => {

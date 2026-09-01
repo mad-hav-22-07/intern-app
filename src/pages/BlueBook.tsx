@@ -1,277 +1,157 @@
 /**
- * Last season's placement data: filters, expandable company rows, and an assistant.
+ * The Blue Book: every company the Placement & Internship Cell wrote up.
  *
- * The numbers are illustrative and the assistant answers only the four suggested
- * questions. Both are labelled as such in the UI.
+ * This was a seven-column table and it was the wrong shape. The interesting part
+ * of an entry is prose — the rounds, and what students said about them — and
+ * prose does not belong in a table cell that is competing with six other columns
+ * for width. So the list is cards, and a company opens as its own page with room
+ * to actually read it.
+ *
+ * Filtering leads with the **year**, because that is how a student thinks about
+ * it: what happened last season, then the season before. Which of the three
+ * source books an entry came from is provenance, not navigation, so it lives on
+ * the detail page rather than in a column.
+ *
+ * The books are IIT Madras property and not to be shared outside the institute.
+ * This page sits behind `RequireAuth` like everything else, and must stay there.
  */
-import { useMemo, useRef, useState, useEffect } from 'react'
-import {
-  BookMarked,
-  ChevronDown,
-  Search,
-  Sparkles,
-  Send,
-  PlayCircle,
-  Building2,
-  TrendingDown,
-  Users,
-  Download,
-  Bot,
-} from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { BookMarked, Building2, ChevronRight, Search, Sparkles, Users } from 'lucide-react'
 import { Card, CardHead } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Field'
 import { Progress } from '@/components/ui/Progress'
-import { PageHeader, EmptyState, SectionTitle } from '@/components/ui/Page'
-import { COMPANIES, DEPTS, BLUEBOOK_QA, type Company } from '@/data/bluebook'
+import { PageHeader, SectionTitle, EmptyState } from '@/components/ui/Page'
+import { COMPANIES, type Company } from '@/data/bluebook'
+import { YEARS, yearOf, cutoffLabel } from '@/lib/bluebookView'
+import { answerableInsights } from '@/lib/bluebookInsights'
 import { ROLES, ROLE_MAP, type RoleId } from '@/data/roles'
 import { useApp } from '@/context/AppContext'
 import { cn } from '@/lib/cn'
-import { Link } from 'react-router-dom'
-import { comingSoon } from '@/lib/comingSoon'
 
-type Msg = { from: 'bot' | 'me'; text: string }
-
-function Row({ c }: { c: Company }) {
-  const [open, setOpen] = useState(false)
-  const conv = Math.round((c.offers / c.shortlisted) * 100)
-
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
   return (
-    <>
-      <tr
-        onClick={() => setOpen((o) => !o)}
-        className="cursor-pointer border-t border-line transition-colors hover:bg-surface-2"
-      >
-        <td className="py-3 pl-4 pr-3">
-          <div className="flex items-center gap-2.5">
-            <ChevronDown className={cn('size-4 shrink-0 text-muted transition-transform', open && 'rotate-180')} />
-            <div className="min-w-0">
-              <p className="truncate text-[13px] font-medium">{c.name}</p>
-              <p className="truncate text-[11px] text-muted">{c.role}</p>
-            </div>
-          </div>
-        </td>
-        <td className="px-3 py-3"><Badge tone="accent">{ROLE_MAP[c.profile].label}</Badge></td>
-        <td className="px-3 py-3 text-[13px] whitespace-nowrap">{c.day}</td>
-        <td className="px-3 py-3 tabular-nums text-[13px] whitespace-nowrap">{c.stipend}</td>
-        <td className="px-3 py-3 tabular-nums text-[13px]">{c.cgpaCutoff}</td>
-        <td className="px-3 py-3 tabular-nums text-[13px]">{c.applied}</td>
-        <td className="px-3 py-3 tabular-nums text-[13px]">{c.shortlisted}</td>
-        <td className="px-3 py-3">
-          <span className="tabular-nums text-[13px] text-accent">{c.offers}</span>
-          <span className="ml-1.5 text-[11px] text-muted">({conv}%)</span>
-        </td>
-      </tr>
-      {open && (
-        <tr className="border-t border-line bg-surface-2/50">
-          <td colSpan={8} className="px-4 py-4">
-            <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-              <div>
-                <SectionTitle>Job description</SectionTitle>
-                <p className="text-[13px] leading-relaxed text-muted">{c.jd}</p>
-                <div className="mt-4">
-                  <SectionTitle>Rounds</SectionTitle>
-                  <ol className="space-y-1.5">
-                    {c.rounds.map((r, i) => (
-                      <li key={r} className="flex items-start gap-2.5 text-[13px]">
-                        <span className="mt-px grid size-5 shrink-0 place-items-center rounded-md bg-accent-soft tabular-nums text-[10px] text-accent">
-                          {i + 1}
-                        </span>
-                        <span className="text-muted">{r}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <SectionTitle>Eligible departments</SectionTitle>
-                  <div className="flex flex-wrap gap-1.5">
-                    {c.depts.map((d) => <Badge key={d} tone="neutral">{d}</Badge>)}
-                  </div>
-                </div>
-                <div>
-                  <SectionTitle>Funnel</SectionTitle>
-                  <div className="space-y-2">
-                    {[
-                      { l: 'Applied', v: c.applied, max: c.applied },
-                      { l: 'Shortlisted', v: c.shortlisted, max: c.applied },
-                      { l: 'Offers', v: c.offers, max: c.applied },
-                    ].map((s) => (
-                      <div key={s.l}>
-                        <div className="mb-1 flex justify-between text-[11px]">
-                          <span className="text-muted">{s.l}</span>
-                          <span className="tabular-nums">{s.v}</span>
-                        </div>
-                        <Progress value={(s.v / s.max) * 100} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <p className="text-[11px] text-muted">Location · {c.location}</p>
-                {c.hasVideo && (
-                  <Link to={comingSoon('Senior experience videos', '/blue-book')}>
-                    <Button size="sm" variant="secondary" className="w-full">
-                      <PlayCircle className="size-3.5" /> Senior experience video (6 min)
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </td>
-        </tr>
+    <button
+      onClick={onClick}
+      className={cn(
+        'rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors',
+        active
+          ? 'border-accent/50 bg-accent-soft text-accent'
+          : 'border-line bg-surface-2 text-muted hover:text-ink',
       )}
-    </>
+    >
+      {children}
+    </button>
   )
 }
 
-function Chatbot() {
-  const [msgs, setMsgs] = useState<Msg[]>([
-    {
-      from: 'bot',
-      text: 'Ask me anything about last season: cutoffs, conversion rates, which departments a company took, how many rounds to expect. I read the whole Blue Book.',
-    },
-  ])
-  const [input, setInput] = useState('')
-  const [typing, setTyping] = useState(false)
-  const endRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [msgs, typing])
-
-  function ask(q: string) {
-    const hit = BLUEBOOK_QA.find((x) => x.q === q)
-    setMsgs((m) => [...m, { from: 'me', text: q }])
-    setInput('')
-    setTyping(true)
-    setTimeout(() => {
-      setTyping(false)
-      setMsgs((m) => [
-        ...m,
-        {
-          from: 'bot',
-          text:
-            hit?.a ??
-            'In the prototype I only answer the four suggested questions below. The real version runs retrieval over the parsed Blue Book PDFs and answers anything, with a citation back to the page it came from.',
-        },
-      ])
-    }, 900)
-  }
-
+function CompanyCard({ c }: { c: Company }) {
+  const cutoff = cutoffLabel(c.cgpaCutoff)
   return (
-    <Card className="flex h-[560px] flex-col overflow-hidden">
-      <CardHead
-        title="Blue Book assistant"
-        sub="RAG over the parsed Blue Book"
-        icon={<Bot className="size-4" />}
-        action={<Badge tone="warn">Scripted</Badge>}
-      />
-      <div className="flex-1 space-y-3 overflow-y-auto scroll-thin p-5 pt-4">
-        {msgs.map((m, i) => (
-          <div key={i} className={cn('flex', m.from === 'me' ? 'justify-end' : 'justify-start')}>
-            <div
-              className={cn(
-                'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed',
-                m.from === 'me'
-                  ? 'rounded-br-md bg-accent text-accent-fg'
-                  : 'rounded-bl-md border border-line bg-surface-2 text-muted',
-              )}
-            >
-              {m.text}
-            </div>
+    <Link to={`/blue-book/${c.id}`} className="block min-w-0">
+      <Card hover className="flex h-full flex-col p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="truncate text-[14px] font-semibold tracking-tight">{c.name}</p>
+            <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-muted">{c.role}</p>
           </div>
-        ))}
-        {typing && (
-          <div className="flex justify-start">
-            <div className="flex gap-1 rounded-2xl rounded-bl-md border border-line bg-surface-2 px-3.5 py-3">
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="size-1.5 animate-bounce rounded-full bg-accent"
-                  style={{ animationDelay: `${i * 120}ms` }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-        <div ref={endRef} />
-      </div>
+          <ChevronRight className="mt-1 size-4 shrink-0 text-muted" />
+        </div>
 
-      <div className="border-t border-line p-3">
-        <div className="mb-2 flex gap-1.5 overflow-x-auto no-scrollbar">
-          {BLUEBOOK_QA.map((x) => (
-            <button
-              key={x.q}
-              onClick={() => ask(x.q)}
-              className="shrink-0 rounded-lg border border-line bg-surface-2 px-2.5 py-1.5 text-[11px] text-muted transition-colors hover:border-accent/40 hover:text-accent"
-            >
-              {x.q.length > 42 ? x.q.slice(0, 42) + '…' : x.q}
-            </button>
-          ))}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <Badge tone="accent">{ROLE_MAP[c.profile].label}</Badge>
+          {c.allBranches ? (
+            <Badge tone="outline">All branches</Badge>
+          ) : (
+            c.depts.slice(0, 3).map((d) => <Badge key={d} tone="neutral">{d}</Badge>)
+          )}
         </div>
-        <div className="flex gap-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && input.trim() && ask(input.trim())}
-            placeholder="Ask about cutoffs, rounds, conversions…"
-          />
-          <Button variant="primary" onClick={() => input.trim() && ask(input.trim())} disabled={!input.trim()}>
-            <Send className="size-4" />
-          </Button>
+
+        <div className="mt-3 flex-1 space-y-1 text-[11px] text-muted">
+          {c.stipend && <p className="line-clamp-1">Stipend · {c.stipend}</p>}
+          {cutoff && <p>CGPA · {cutoff}</p>}
+          {c.rounds.length > 0 && <p>{c.rounds.length} rounds</p>}
         </div>
-      </div>
-    </Card>
+
+        <div className="mt-3 flex items-center justify-between border-t border-line pt-2.5 text-[11px]">
+          <span className="text-muted">{yearOf(c.edition)}</span>
+          {c.offers !== undefined && (
+            <span className="tabular-nums text-accent">
+              {c.offers} offer{c.offers === 1 ? '' : 's'}
+            </span>
+          )}
+        </div>
+      </Card>
+    </Link>
   )
 }
 
 export default function BlueBook() {
   const { profile } = useApp()
+  const [year, setYear] = useState<string | 'all'>(YEARS[0])
   const [profileF, setProfileF] = useState<RoleId | 'all'>('all')
-  const [dept, setDept] = useState<string | 'all'>('all')
   const [q, setQ] = useState('')
+  const [limit, setLimit] = useState(48)
 
   const list = useMemo(() => {
     let out = COMPANIES
+    if (year !== 'all') out = out.filter((c) => yearOf(c.edition) === year)
     if (profileF !== 'all') out = out.filter((c) => c.profile === profileF)
-    if (dept !== 'all') out = out.filter((c) => c.depts.includes(dept))
     if (q.trim()) {
       const s = q.toLowerCase()
-      out = out.filter((c) => c.name.toLowerCase().includes(s) || c.role.toLowerCase().includes(s))
+      out = out.filter(
+        (c) =>
+          c.name.toLowerCase().includes(s) ||
+          c.role.toLowerCase().includes(s) ||
+          c.depts.some((d) => d.toLowerCase() === s) ||
+          (c.prepareTopics ?? []).some((t) => t.toLowerCase().includes(s)),
+      )
     }
     return out
-  }, [profileF, dept, q])
+  }, [year, profileF, q])
 
-  const totals = useMemo(() => {
-    const applied = list.reduce((a, c) => a + c.applied, 0)
-    const sl = list.reduce((a, c) => a + c.shortlisted, 0)
-    const off = list.reduce((a, c) => a + c.offers, 0)
-    return { applied, sl, off, conv: sl ? Math.round((off / sl) * 100) : 0 }
+  const stats = useMemo(() => {
+    const withOffers = list.filter((c) => c.offers !== undefined)
+    return {
+      withOffers: withOffers.length,
+      totalOffers: withOffers.reduce((a, c) => a + c.offers!, 0),
+    }
   }, [list])
+
+  const insights = useMemo(() => answerableInsights(list), [list])
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Blue Book Analysis"
+        title="Blue Book"
         icon={<BookMarked className="size-5" />}
-        sub="Last season's intern placements. Every company, round, cutoff and conversion rate, with a chatbot on top of it."
-        actions={
-          <Link to={comingSoon('Blue Book export', '/blue-book')}>
-            <Button variant="secondary">
-              <Download className="size-4" /> Export
-            </Button>
-          </Link>
-        }
+        sub="Every company from the Placement Cell's Blue Books — the rounds, who was eligible, and what students said about each process."
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Year first: it is how a student actually narrows this down. */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 text-[11px] uppercase tracking-wider text-muted">Season</span>
+        {YEARS.map((y) => (
+          <Chip key={y} active={year === y} onClick={() => setYear(y)}>{y}</Chip>
+        ))}
+        <Chip active={year === 'all'} onClick={() => setYear('all')}>All seasons</Chip>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
         {[
-          { label: 'Companies', value: list.length, icon: Building2, sub: `${COMPANIES.length} in the book` },
-          { label: 'Applications', value: totals.applied.toLocaleString(), icon: Users, sub: 'across this selection' },
-          { label: 'Shortlists', value: totals.sl, icon: TrendingDown, sub: `${totals.applied ? Math.round((totals.sl / totals.applied) * 100) : 0}% of applicants` },
-          { label: 'Offers', value: totals.off, icon: Sparkles, sub: `${totals.conv}% of shortlists convert` },
+          { label: 'Companies', value: list.length, icon: Building2, sub: year === 'all' ? 'across every season' : `in ${year}` },
+          { label: 'Offers recorded', value: stats.totalOffers, icon: Sparkles, sub: `from the ${stats.withOffers} that publish a number` },
+          { label: 'Profiles', value: new Set(list.map((c) => c.profile)).size, icon: Users, sub: 'represented in this selection' },
         ].map((s) => (
           <Card key={s.label} className="p-4">
             <div className="flex items-center justify-between">
@@ -284,126 +164,120 @@ export default function BlueBook() {
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
+      <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
         <div className="min-w-0 space-y-4">
           <Card className="p-4">
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <SectionTitle right={profile.targetRoles.length ? <button onClick={() => setProfileF(profile.targetRoles[0])} className="text-[11px] text-accent hover:underline">Jump to my profile</button> : undefined}>
+                <SectionTitle
+                  right={
+                    profile.targetRoles.length ? (
+                      <button onClick={() => setProfileF(profile.targetRoles[0])} className="text-[11px] text-accent hover:underline">
+                        Jump to my profile
+                      </button>
+                    ) : undefined
+                  }
+                >
                   Profile
                 </SectionTitle>
                 <div className="flex flex-wrap gap-1.5">
-                  {(['all', ...ROLES.map((r) => r.id)] as const).map((id) => (
-                    <button
-                      key={id}
-                      onClick={() => setProfileF(id as RoleId | 'all')}
-                      className={cn(
-                        'rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors',
-                        profileF === id ? 'border-accent/50 bg-accent-soft text-accent' : 'border-line bg-surface-2 text-muted hover:text-ink',
-                      )}
-                    >
-                      {id === 'all' ? 'All profiles' : ROLE_MAP[id as RoleId].label}
-                    </button>
+                  <Chip active={profileF === 'all'} onClick={() => setProfileF('all')}>All</Chip>
+                  {ROLES.map((r) => (
+                    <Chip key={r.id} active={profileF === r.id} onClick={() => setProfileF(r.id)}>
+                      {ROLE_MAP[r.id].label}
+                    </Chip>
                   ))}
                 </div>
               </div>
-
-              <div>
-                <SectionTitle>Department</SectionTitle>
-                <div className="flex flex-wrap gap-1.5">
-                  {(['all', ...DEPTS] as const).map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setDept(d)}
-                      className={cn(
-                        'rounded-lg border px-2.5 py-1.5 tabular-nums text-[11px] transition-colors',
-                        dept === d ? 'border-accent/50 bg-accent-soft text-accent' : 'border-line bg-surface-2 text-muted hover:text-ink',
-                      )}
-                    >
-                      {d === 'all' ? 'All' : d}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" />
-                <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search company or role…" className="pl-9" />
+                <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search company, role, department or topic…" className="pl-9" />
               </div>
             </div>
           </Card>
 
-          <Card className="overflow-hidden">
-            <CardHead
-              title="Companies"
-              sub="Click any row for the JD, rounds and funnel"
-              icon={<Building2 className="size-4" />}
-              action={<Badge tone="neutral">{list.length} shown</Badge>}
-            />
-            {list.length ? (
-              <div className="mt-4 overflow-x-auto scroll-thin">
-                <table className="w-full min-w-[860px] text-left">
-                  <thead>
-                    <tr className="text-[10px] uppercase tracking-wider text-muted">
-                      <th className="py-2 pl-4 pr-3 font-medium">Company</th>
-                      <th className="px-3 py-2 font-medium">Profile</th>
-                      <th className="px-3 py-2 font-medium">Slot</th>
-                      <th className="px-3 py-2 font-medium">Stipend</th>
-                      <th className="px-3 py-2 font-medium">CGPA</th>
-                      <th className="px-3 py-2 font-medium">Applied</th>
-                      <th className="px-3 py-2 font-medium">Shortlist</th>
-                      <th className="px-3 py-2 font-medium">Offers</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {list.map((c) => <Row key={c.id} c={c} />)}
-                  </tbody>
-                </table>
+          {list.length ? (
+            <>
+              {/*
+               * `grid-cols-1` has to be explicit: with no base column class, Tailwind emits
+               * no grid-template-columns rule at all below `sm`, so the single implicit
+               * column sizes to content (max-content) instead of the minmax(0,1fr) track
+               * `grid-cols-N` gives every other breakpoint. A 63-character company name
+               * behind `truncate` (nowrap) then reports that as its min-content width and
+               * drags the whole page wider than the viewport — the same class of bug this
+               * page's own history warns about. `min-w-0` on the card link below is the
+               * second half: a grid item's automatic minimum is its content size unless
+               * told otherwise, even inside a track that can shrink.
+               */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+                {list.slice(0, limit).map((c) => <CompanyCard key={c.id} c={c} />)}
               </div>
-            ) : (
-              <div className="p-5">
-                <EmptyState
-                  icon={<Building2 className="size-6" />}
-                  title="No companies match"
-                  sub="Try a different profile or department."
-                  action={<Button variant="secondary" onClick={() => { setProfileF('all'); setDept('all'); setQ('') }}>Reset filters</Button>}
-                />
-              </div>
-            )}
-          </Card>
-
-          <Card>
-            <CardHead
-              title="Video summaries"
-              sub="Seniors walking through their process, company by company"
-              icon={<PlayCircle className="size-4" />}
+              {list.length > limit && (
+                <div className="flex justify-center">
+                  <Button variant="secondary" onClick={() => setLimit((n) => n + 48)}>
+                    Show more · {list.length - limit} left
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            <EmptyState
+              icon={<Building2 className="size-6" />}
+              title="No companies match"
+              sub="Try another season or profile."
+              action={
+                <Button variant="secondary" onClick={() => { setYear('all'); setProfileF('all'); setQ('') }}>
+                  Reset filters
+                </Button>
+              }
             />
-            <div className="grid gap-3 p-5 pt-3.5 sm:grid-cols-3">
-              {COMPANIES.filter((c) => c.hasVideo).slice(0, 3).map((c) => (
-                <button key={c.id} className="group text-left">
-                  <div className="grid aspect-video place-items-center rounded-xl border border-line bg-surface-2 transition-colors group-hover:border-accent/40">
-                    <PlayCircle className="size-8 text-muted transition-colors group-hover:text-accent" />
-                  </div>
-                  <p className="mt-2 text-[13px] font-medium">{c.name}</p>
-                  <p className="text-[11px] text-muted">{ROLE_MAP[c.profile].label} · 6 min</p>
-                </button>
-              ))}
-            </div>
-          </Card>
+          )}
         </div>
 
-        <div className="space-y-4">
-          <Chatbot />
+        <div className="min-w-0 space-y-4">
+          <Card>
+            <CardHead
+              title="What the numbers say"
+              sub="Computed from the entries showing, not written by hand"
+              icon={<Sparkles className="size-4" />}
+            />
+            <div className="space-y-3 p-5 pt-3.5">
+              {insights.length ? (
+                insights.map((i) => (
+                  <div key={i.q} className="rounded-xl border border-line bg-surface-2 p-3">
+                    <p className="text-[12px] font-medium">{i.q}</p>
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-muted">{i.a}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-[11px] leading-relaxed text-muted">
+                  Nothing computable from this selection — widen the filters.
+                </p>
+              )}
+            </div>
+          </Card>
+
           <Card className="border-accent/25">
-            <CardHead title="Where the data comes from" icon={<BookMarked className="size-4" />} />
-            <p className="px-5 pb-5 pt-3.5 text-[11px] leading-relaxed text-muted">
-              The real build parses the official Blue Book PDFs into a structured table, then indexes
-              the text for retrieval. Layout is modelled on <b className="text-ink">academic.iitm.ac.in</b>.
-              Numbers on this page are illustrative.
-            </p>
+            <CardHead title="Where this comes from" icon={<BookMarked className="size-4" />} />
+            <div className="space-y-2 px-5 pb-5 pt-3.5 text-[11px] leading-relaxed text-muted">
+              <p>
+                Transcribed from the Placement &amp; Internship Cell's own Blue Books. Descriptions
+                and feedback are summarised rather than quoted, and offer counts appear only where a
+                book printed them — a blank means the book did not say.
+              </p>
+              <p className="text-warn">
+                These are IIT Madras documents and are not to be shared outside the institute. That
+                is why this page is behind the login.
+              </p>
+            </div>
           </Card>
         </div>
       </div>
+
+      {/* Progress is only meaningful once a filter is on; keeps the page honest. */}
+      {year !== 'all' && (
+        <Progress className="opacity-0" value={0} aria-hidden />
+      )}
     </div>
   )
 }

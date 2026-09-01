@@ -45,7 +45,7 @@ import { cn } from '@/lib/cn'
 const HIGHLIGHTS = [
   { icon: Sparkles, title: 'Role-aware prep tracks', body: 'Quant, SDE, Finance, Consult, AI/ML, FMCG and Core, each with its own curated material.' },
   { icon: FileCheck2, title: 'AI resume scoring', body: 'Score out of 100 against the profile you are targeting, with concrete rewrites.' },
-  { icon: BookMarked, title: 'Blue Book analysis', body: 'Every company, round, cutoff and conversion rate, plus a chatbot that answers questions about it.' },
+  { icon: BookMarked, title: 'Blue Book', body: 'Every company from the Placement Cell\u2019s Blue Books \u2014 the rounds, who was eligible, and what students said about each process.' },
   { icon: Mic, title: 'Mock interviews & exams', body: 'Round-by-round practice with feedback, solo or head-to-head against friends.' },
   { icon: Trophy, title: 'Competition radar', body: 'Unstop, Codeforces and insti mails filtered to the roles you actually care about.' },
   { icon: MessagesSquare, title: 'Peer forum', body: 'Interview experiences from the batch above you, moderated and searchable.' },
