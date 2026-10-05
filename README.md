@@ -9,12 +9,53 @@ notes exists as a real page.
 
 ## Run it
 
+Install Node.js 24 (or Node.js 22+) and Git. If you use nvm, run `nvm install`
+and `nvm use` to select the version in `.nvmrc`.
+
 ```bash
-npm install
+git clone --branch ui-refresh https://github.com/mad-hav-22-07/intern-app.git
+cd intern-app
+npm run setup        # locked dependencies, optional LFS pull, env template, build
 npm run dev          # http://localhost:5173
 ```
 
-Sign in with **`admin` / `admin123`** (the login page has a tap-to-fill button).
+The setup script requires Bash (Linux/macOS or Git Bash on Windows). It preserves
+an existing `.env.local`. To install manually, run `npm ci`, copy `.env.example`
+to `.env.local` if it does not exist, then run `npm run build`.
+
+Without Supabase configured, sign in with **`admin` / `admin123`**
+(the demo login page has a tap-to-fill button).
+
+### Design assets and Git LFS
+
+The six original design images in `notes/` are stored using Git LFS. Install
+Git LFS before cloning to download them automatically:
+
+```bash
+# Fedora
+sudo dnf install git-lfs
+# Debian/Ubuntu
+sudo apt-get install git-lfs
+# macOS with Homebrew
+brew install git-lfs
+```
+
+On Windows, install Git LFS and run the commands below in Git Bash.
+For an existing clone, after installing Git LFS:
+
+```bash
+git lfs install --local
+git lfs pull
+git lfs fsck
+```
+
+Commit `.gitattributes` alongside any new LFS assets. Dependencies in
+`node_modules/` are recreated by `npm ci`; `dist/` is recreated by `npm run build`.
+Local credentials (`.env.local`) and Vercel project settings (`.vercel/`) stay
+ignored. `.env.example` is the committed configuration template.
+The four institute-restricted source PDFs in `Blue_Book/` stay excluded from
+this public repository; the app uses the already committed TypeScript data and
+does not require those PDFs to build or run.
 
 The forum works immediately with no setup. Without a database it saves to
 `localStorage` and says so on screen. Connect Supabase to share it with the batch.
