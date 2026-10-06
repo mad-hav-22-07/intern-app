@@ -3,7 +3,6 @@ dist
 .vercel
 .DS_Store
 *.local
-notes/
 
 # env
 .env
@@ -12,3 +11,13 @@ notes/
 
 # typescript build artifact
 tsconfig.tsbuildinfo
+
+# The Blue Book source PDFs.
+#
+# These are the Placement & Internship Cell's own documents and carry an explicit
+# notice that they are IIT Madras property and are not to be shared outside the
+# institute. This repository is public, so they must never be committed. The
+# structured data extracted from them lives in src/data/bluebook/ — see the
+# header of src/data/bluebookTypes.ts for why the app keeps it behind the login.
+Blue_Book/
+*.pdf

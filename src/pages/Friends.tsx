@@ -1,3 +1,9 @@
+/**
+ * Leaderboard, challenges and requests over mock data.
+ *
+ * The one real value here is the viewer's own streak, which comes from the context
+ * rather than the fixture.
+ */
 import { useState } from 'react'
 import {
   Users,
@@ -23,8 +29,9 @@ import { Modal } from '@/components/ui/Modal'
 import { FRIENDS, REQUESTS, type Friend } from '@/data/exams'
 import { ROLE_MAP } from '@/data/roles'
 import { useApp } from '@/context/AppContext'
-import { STREAK } from '@/data/user'
 import { cn } from '@/lib/cn'
+import { Link } from 'react-router-dom'
+import { comingSoon } from '@/lib/comingSoon'
 
 function Av({ name, size = 40 }: { name: string; size?: number }) {
   return (
@@ -38,7 +45,7 @@ function Av({ name, size = 40 }: { name: string; size?: number }) {
 }
 
 export default function Friends() {
-  const { profile } = useApp()
+  const { profile, streak } = useApp()
   const [tab, setTab] = useState<'friends' | 'leaderboard' | 'requests'>('friends')
   const [q, setQ] = useState('')
   const [add, setAdd] = useState(false)
@@ -51,7 +58,7 @@ export default function Friends() {
 
   const board = [
     ...FRIENDS,
-    { id: 'me', name: profile.name, roll: profile.rollNo, branch: profile.branch, roles: profile.targetRoles, streak: STREAK.current, weekMinutes: 420, solved: 187 },
+    { id: 'me', name: profile.name, roll: profile.rollNo, branch: profile.branch, roles: profile.targetRoles, streak: streak.current, weekMinutes: 420, solved: 187 },
   ].sort((a, b) => b.weekMinutes - a.weekMinutes)
 
   const maxMinutes = Math.max(...board.map((b) => b.weekMinutes))
@@ -107,15 +114,15 @@ export default function Friends() {
 
                 <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-3.5 text-center">
                   <div>
-                    <p className="font-mono text-sm font-semibold text-accent">{f.streak}d</p>
+                    <p className="tabular-nums text-sm font-semibold text-accent">{f.streak}d</p>
                     <p className="text-[10px] uppercase tracking-wider text-muted">Streak</p>
                   </div>
                   <div>
-                    <p className="font-mono text-sm font-semibold">{Math.round(f.weekMinutes / 60)}h</p>
+                    <p className="tabular-nums text-sm font-semibold">{Math.round(f.weekMinutes / 60)}h</p>
                     <p className="text-[10px] uppercase tracking-wider text-muted">This week</p>
                   </div>
                   <div>
-                    <p className="font-mono text-sm font-semibold">{f.solved}</p>
+                    <p className="tabular-nums text-sm font-semibold">{f.solved}</p>
                     <p className="text-[10px] uppercase tracking-wider text-muted">Solved</p>
                   </div>
                 </div>
@@ -124,9 +131,11 @@ export default function Friends() {
                   <Button size="sm" variant="secondary" className="flex-1" onClick={() => setChallenge(f)}>
                     <Swords className="size-3.5" /> Challenge
                   </Button>
-                  <Button size="sm" variant="ghost">
-                    <MessageCircle className="size-3.5" />
-                  </Button>
+                  <Link to={comingSoon('Direct messages', '/friends')} aria-label={`Message ${f.name}`}>
+                    <Button size="sm" variant="ghost">
+                      <MessageCircle className="size-3.5" />
+                    </Button>
+                  </Link>
                 </div>
               </Card>
             ))}
@@ -140,7 +149,7 @@ export default function Friends() {
         <Card>
           <CardHead
             title="This week"
-            sub="Ranked by focused prep time — resets Monday"
+            sub="Ranked by focused prep time. Resets Monday"
             icon={<Trophy className="size-4" />}
             action={<Badge tone="accent">Week 34</Badge>}
           />
@@ -149,7 +158,7 @@ export default function Friends() {
               const isMe = f.id === 'me'
               return (
                 <div key={f.id} className={cn('flex items-center gap-3 py-3', isMe && 'rounded-xl bg-accent-soft px-3')}>
-                  <span className={cn('grid size-7 shrink-0 place-items-center rounded-lg font-mono text-xs font-semibold', i === 0 ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-muted')}>
+                  <span className={cn('grid size-7 shrink-0 place-items-center rounded-lg tabular-nums text-xs font-semibold', i === 0 ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-muted')}>
                     {i === 0 ? <Crown className="size-3.5" /> : i + 1}
                   </span>
                   <Av name={f.name} size={32} />
@@ -163,7 +172,7 @@ export default function Friends() {
                     <Progress value={(f.weekMinutes / maxMinutes) * 100} />
                   </div>
                   <div className="w-16 shrink-0 text-right">
-                    <p className="font-mono text-[13px] font-semibold">{Math.round(f.weekMinutes / 60)}h</p>
+                    <p className="tabular-nums text-[13px] font-semibold">{Math.round(f.weekMinutes / 60)}h</p>
                     <p className="flex items-center justify-end gap-0.5 text-[10px] text-muted">
                       <Flame className="size-3 text-accent" />{f.streak}d
                     </p>
@@ -210,7 +219,7 @@ export default function Friends() {
       >
         <Input placeholder="e.g. CS22B015" autoFocus />
         <div className="mt-4">
-          <SectionTitle>Suggested — same target profiles</SectionTitle>
+          <SectionTitle>Suggested: same target profiles</SectionTitle>
           <div className="space-y-2">
             {REQUESTS.map((r) => (
               <div key={r.id} className="flex items-center gap-3 rounded-xl border border-line bg-surface-2 p-3">
@@ -219,7 +228,9 @@ export default function Friends() {
                   <p className="text-[13px] font-medium">{r.name}</p>
                   <p className="text-[11px] text-muted">{r.roll} · {r.mutual} mutual</p>
                 </div>
-                <Button size="sm" variant="secondary"><UserPlus className="size-3.5" /> Add</Button>
+                <Link to={comingSoon('Friend requests', '/friends')}>
+                  <Button size="sm" variant="secondary"><UserPlus className="size-3.5" /> Add</Button>
+                </Link>
               </div>
             ))}
           </div>

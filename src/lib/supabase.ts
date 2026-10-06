@@ -12,12 +12,19 @@ export const isSupabaseConfigured = Boolean(url && anonKey)
 
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(url!, anonKey!, {
-      auth: { persistSession: false },
+      auth: {
+        // Auth is real now, so the session has to survive a refresh. Supabase
+        // stores it in localStorage and refreshes the access token in the
+        // background; only the short-lived token is ever sent with a request.
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
       realtime: { params: { eventsPerSecond: 5 } },
     })
   : null
 
-/** Narrowing helper — throws rather than returning a null client. */
+/** Narrowing helper. Throws rather than returning a null client. */
 export function requireSupabase(): SupabaseClient {
   if (!supabase) {
     throw new Error(

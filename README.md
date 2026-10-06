@@ -1,127 +1,193 @@
 # Internship Preparation Drive
 
-A responsive front-end for the prep platform sketched in `notes/IMG_1001–1006.png`.
-Every feature from those notes exists as a real page with example content.
+A prep platform for IIT Madras students going into intern season. Pick the profiles
+you are targeting and the dashboard, competitions, mock rounds and Blue Book filters
+all shape themselves around that choice.
 
-**The forum is backed by a real Postgres database (Supabase).** The rest of the app is
-still a prototype: auth is a hardcoded check and the other pages read mock data from
-`src/data/`.
+Built from the plan sketched in `notes/IMG_1001–1006.png`. Every feature in those
+notes exists as a real page.
 
 ## Run it
 
+Install Node.js 24 (or Node.js 22+) and Git. If you use nvm, run `nvm install`
+and `nvm use` to select the version in `.nvmrc`.
+
 ```bash
-npm install
+git clone --branch ui-refresh https://github.com/mad-hav-22-07/intern-app.git
+cd intern-app
+npm run setup        # locked dependencies, optional LFS pull, env template, build
 npm run dev          # http://localhost:5173
 ```
 
-Sign in with **`admin` / `admin123`** (the login page has a tap-to-fill button for it).
+The setup script requires Bash (Linux/macOS or Git Bash on Windows). It preserves
+an existing `.env.local`. To install manually, run `npm ci`, copy `.env.example`
+to `.env.local` if it does not exist, then run `npm run build`.
 
-The forum works immediately with no setup — without a database it saves to
+Without Supabase configured, sign in with **`admin` / `admin123`**
+(the demo login page has a tap-to-fill button).
+
+### Design assets and Git LFS
+
+The six original design images in `notes/` are stored using Git LFS. Install
+Git LFS before cloning to download them automatically:
+
+```bash
+# Fedora
+sudo dnf install git-lfs
+# Debian/Ubuntu
+sudo apt-get install git-lfs
+# macOS with Homebrew
+brew install git-lfs
+```
+
+On Windows, install Git LFS and run the commands below in Git Bash.
+For an existing clone, after installing Git LFS:
+
+```bash
+git lfs install --local
+git lfs pull
+git lfs fsck
+```
+
+Commit `.gitattributes` alongside any new LFS assets. Dependencies in
+`node_modules/` are recreated by `npm ci`; `dist/` is recreated by `npm run build`.
+Local credentials (`.env.local`) and Vercel project settings (`.vercel/`) stay
+ignored. `.env.example` is the committed configuration template.
+The four institute-restricted source PDFs in `Blue_Book/` stay excluded from
+this public repository; the app uses the already committed TypeScript data and
+does not require those PDFs to build or run.
+
+The forum works immediately with no setup. Without a database it saves to
 `localStorage` and says so on screen. Connect Supabase to share it with the batch.
 
-## Stack
+```bash
+npm run build        # type-checks, then bundles to dist/
+npm run preview      # serve the production build locally
+```
 
-Vite · React 19 · TypeScript · Tailwind CSS v4 · React Router · lucide-react · Supabase.
-Light theme by default, with a dark-mode toggle in the header.
+## What's real and what isn't
+
+**Backed by a database (Supabase):** the whole forum. Posting, threaded replies,
+editing and deleting your own content, voting one-per-person, anonymous posting,
+reporting with an auto-flag threshold, accepted answers, Hot/New/Top sorting,
+full-text search, filters kept in the URL, and live updates across browsers.
+
+**Live over the network:** upcoming Codeforces rounds and LeetCode contests, both
+cached for 15 minutes and falling back cleanly when a source is down; and the
+compiler behind the coding rounds, which is a real Judge0 instance running real
+Python, C++ and Java. JavaScript is judged in the browser, so that language keeps
+working with no network at all.
+
+**Real accounts, when Supabase is connected:** sign-up restricted to
+`@smail.iitm.ac.in`, email confirmation before the account works, one account per
+address and per roll number, and password reset by emailed link. Without Supabase
+the login falls back to a labelled demo account.
+
+**Real, but stored only in this browser:** profile editing, target roles,
+resource check-offs, the study trackers (**1069 individually tickable items**
+across 13 tracks — NeetCode 75/150/250, Brainstellar, Heard on the Street,
+Mosteller, Ross, Wasserman, Blitzstein & Hwang, Harvard Stat 110, MIT 6.041 and
+the mental-maths drill), which problems you have solved, the daily challenge per
+profile, the streak and activity heatmap, the competition calendar plus
+genuine `.ics` and Google Calendar export, Blue Book filters, the mock exam timer and
+scoring, and the friends leaderboard.
+
+**Real, and worth calling out:** the judge. **28 problems** you can actually
+solve, written from scratch, in a LeetCode-style editor — you implement a method
+in **Python, C++ (17/20/23), Java, JavaScript, Go, Rust, TypeScript or C#**, it
+gets called with real arguments, and your return value is compared against hidden
+testcases. Editable testcase box, per-case runtimes, your own `print` output
+shown back to you. Plus **six SQL problems** run against a real SQLite.
+
+Two ways in. **Practice** (`/practice`) is the filterable problem list with no
+clock — coding and SQL behind one switch — and **Mock Exam** wraps the editor in
+a proctored round: fullscreen gate, timer, and proctoring that
+genuinely counts fullscreen exits, tab switches and blocked pastes rather than
+pretending to. Mock Exam also carries **eight exam templates** at Easy / Medium /
+Hard for SDE and Quant, each a deliberate simulation of a real assessment rather
+than an arbitrary pile of problems.
+
+Every problem is verified in all four languages before it ships — `npm run
+verify:problems` checks that each starter compiles, that no starter accidentally
+solves its own problem, and that four independent reference implementations agree
+character-for-character on every expected value.
+
+**Deliberately scripted:** the resume AI score, the Blue Book assistant's answers,
+the mock interviewer's questions, and the proctoring badge on the *MCQ* papers
+(the coding rounds enforce theirs for real). Each says so on screen.
+
+**Not built yet:** anything that links to `/coming-soon`. Those controls exist in the
+design but are not wired up, so they route to a page that says which piece is
+missing rather than doing nothing when clicked.
+
+## Documentation
+
+**[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** is the full picture: the tech stack
+and why each piece was chosen, how the app boots, every route, the state model and
+its `localStorage` keys, the forum's two-backend design, the contest feeds, the
+styling system, and a "where to change what" table.
+
+Start there. This file only covers running and deploying.
+
+## Layout
+
+```
+src/
+  data/          mock content; replace these files with real material
+  lib/           everything with no React in it: API clients, dates, maths
+  hooks/         the stateful glue between lib/ and pages/
+  pages/         one file per route
+  components/
+    ui/          the design system: Button, Card, Badge, Modal, Field, …
+    forum/       forum-specific pieces
+    layout/      Shell (sidebar, header, drawer) and ErrorBoundary
+    art/         inline SVG illustrations
+  context/       AppContext, the only cross-page state
+supabase/migrations/   the forum schema, applied in order
+docs/ARCHITECTURE.md
+```
 
 ## Connecting the forum database
 
+Without these the forum still works, it is just private to each browser.
+
 ```bash
-npm i -g vercel
 vercel link
 vercel integration add supabase --yes    # provisions Postgres + injects env vars
 vercel env pull .env.local --yes
 ```
 
-Vite only exposes `VITE_`-prefixed variables, so mirror the two the app reads
-(see `.env.example`):
+Vite only exposes `VITE_`-prefixed variables, so mirror the two the app reads (see
+`.env.example`):
 
 ```bash
 vercel env add VITE_SUPABASE_URL
 vercel env add VITE_SUPABASE_ANON_KEY
 ```
 
-Then apply `supabase/migrations/0001_forum.sql` in the Supabase SQL editor — it is
-idempotent, so re-running it is safe — and optionally load the example threads:
+> These are inlined at **build** time, so add them *before* deploying, or redeploy
+> afterwards. Setting them does not change a build that already shipped.
+
+Then apply the three migrations in `supabase/migrations/` in order in the Supabase
+SQL editor. All are idempotent, so re-running them is safe. `0003_accounts.sql`
+also lists three dashboard settings that SQL cannot set and that you must turn on
+before accounts are safe to use. Optionally load the example threads:
 
 ```bash
 npm run db:seed
 ```
 
-### Schema
+## Deploying
 
-| Table | Holds |
-|---|---|
-| `forum_posts` | threads, with denormalised `score` / `comment_count` / `report_count` and a generated full-text `search` column |
-| `forum_comments` | flat rows with `parent_id`, assembled into a reply tree client-side |
-| `forum_votes` | one row per `(voter, target)`, written only through the `forum_vote` RPC |
-| `forum_reports` | one row per `(reporter, target)`; three reports flags a post |
+The app is a static SPA, so nothing needs a server. `vercel.json` already rewrites
+every path to `index.html` so deep links like `/forum/:postId` survive a refresh.
 
-RLS is on for all four. Reads and inserts are open to `anon`; updates and deletes are
-closed, and every derived number is written by a trigger rather than by the client.
-Voting and accepting an answer go through `security definer` RPCs that enforce
-toggle semantics and post ownership.
+Either connect the GitHub repo at [vercel.com/new](https://vercel.com/new) for
+automatic deploys on push, or:
 
-> **This is not authentication.** The anon key ships in the client bundle and
-> `author_key` is a per-browser UUID in `localStorage`, so identity is self-asserted.
-> It is good enough to make voting one-per-person and to gate "accept an answer" to
-> the thread's author. Real accounts (Supabase Auth + an `author_id` FK + ownership
-> policies) are the fix, and the schema is shaped to take them.
-
-## Where things live
-
-```
-src/
-  data/          mock content — replace these files with real material
-    roles.ts       7 target profiles + their curated study material
-    user.ts        demo profile, example resume review, streak
-    forum.ts       example threads, used as seed data and as the offline fallback
-    competitions.ts, bluebook.ts, interviews.ts, exams.ts
-  lib/
-    supabase.ts    client + `isSupabaseConfigured`
-    forumApi.ts    one async surface over two backends
-    forumRemote.ts Supabase implementation (+ Realtime)
-    forumLocal.ts  localStorage implementation
-    forumTypes.ts  types, comment-tree builder, anonymity helper
-    identity.ts    per-browser key used as author_key / voter_key
-    time.ts        timeAgo, hoursSince, hot ranking
-  hooks/useForum.ts   list / thread / vote state
-  pages/         one file per sidebar item, plus ForumThread for /forum/:postId
-  components/
-    forum/       PostRow, CommentTree, ComposeModal, VoteControl, AnonToggle
-    ui/          Button, Card, Badge, Modal, Tabs, Field, Progress/Ring, Page
-    layout/      Shell — sidebar, header, mobile drawer
-  context/       AppContext — fake auth, profile, theme, progress (localStorage)
-supabase/migrations/0001_forum.sql
-scripts/seed-forum.ts
+```bash
+npx vercel link
+npx vercel deploy --prod
 ```
 
-## What's real vs. stubbed
-
-**Backed by a database:** the whole forum — posting, threaded replies, voting
-(one per person, persisted), anonymous posting, reporting with an auto-flag
-threshold, accepted answers, Hot/New/Top sorting, full-text search, real topic
-counts, deep-linkable threads at `/forum/:postId`, and live updates across browsers.
-
-**Fully interactive, local only:** login, profile editing, target-role checkboxes →
-dashboard role dropdown, resource check-off + progress, competition filters and
-calendar, Blue Book filters and expandable company rows, mock interview session →
-feedback, mock exam → palette/timer → results, friends leaderboard, theme toggle.
-
-**Deliberately scripted or stubbed:** the resume AI score, the Blue Book chatbot
-answers, the mock interviewer's questions, proctoring, calendar sync, and file
-upload. Each of those says so on screen.
-
-## Theming
-
-All colour lives in `src/index.css` as CSS variables — one `:root` block for light,
-one `.dark` block for dark. There are no `dark:` variants and no hex literals in any
-component, so re-theming the whole app is an edit to those two blocks. The stored
-preference is applied by an inline script in `index.html` before first paint.
-
-## Replacing the placeholder content
-
-Everything the notes list as "material to be added" is in `src/data/roles.ts`. Each
-resource has an optional `url` — entries without one render as `link pending` instead
-of a dead link. Add the URL and it becomes a live link. Same pattern for the Blue Book
-PDFs (`bluebook.ts`) and case material.
+Vercel auto-detects Vite, so there is no build configuration to set.

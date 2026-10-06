@@ -4,10 +4,10 @@ import { cn } from '@/lib/cn'
 type Tone = 'accent' | 'neutral' | 'warn' | 'danger' | 'outline'
 
 const tones: Record<Tone, string> = {
-  accent: 'bg-accent-soft text-accent border-accent/25',
+  accent: 'bg-accent-soft text-accent border-accent/20',
   neutral: 'bg-surface-2 text-muted border-line',
-  warn: 'bg-warn/10 text-warn border-warn/25',
-  danger: 'bg-danger/10 text-danger border-danger/25',
+  warn: 'bg-warn/8 text-warn border-warn/20',
+  danger: 'bg-danger/8 text-danger border-danger/20',
   outline: 'bg-transparent text-muted border-line',
 }
 

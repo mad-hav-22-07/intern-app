@@ -1,4 +1,5 @@
 import type { RoleId } from './roles'
+import { HOTS_QUESTIONS } from './quantQuestions'
 
 export type Question = {
   id: string
@@ -64,10 +65,27 @@ export const EXAMS: Exam[] = [
   { id: 'e2', title: 'Quant Mental Maths Sprint', role: 'quant', minutes: 8, questionCount: 80, difficulty: 'Hard', attempts: 742, avgScore: 44, yourBest: 51, questions: SAMPLE },
   { id: 'e3', title: 'Probability Fundamentals', role: 'quant', minutes: 45, questionCount: 20, difficulty: 'Medium', attempts: 918, avgScore: 58, questions: SAMPLE },
   { id: 'e4', title: 'Consulting Guesstimate Drill', role: 'consult', minutes: 30, questionCount: 6, difficulty: 'Medium', attempts: 511, avgScore: 66, questions: SAMPLE },
-  { id: 'e5', title: 'Finance Aptitude — Full Length', role: 'finance', minutes: 60, questionCount: 50, difficulty: 'Medium', attempts: 663, avgScore: 55, yourBest: 64, questions: SAMPLE },
+  { id: 'e5', title: 'Finance Aptitude: Full Length', role: 'finance', minutes: 60, questionCount: 50, difficulty: 'Medium', attempts: 663, avgScore: 55, yourBest: 64, questions: SAMPLE },
   { id: 'e6', title: 'ML Fundamentals Quiz', role: 'aiml', minutes: 40, questionCount: 30, difficulty: 'Hard', attempts: 489, avgScore: 52, questions: SAMPLE },
   { id: 'e7', title: 'FMCG Aptitude + Verbal', role: 'fmcg', minutes: 50, questionCount: 40, difficulty: 'Easy', attempts: 372, avgScore: 71, questions: SAMPLE },
-  { id: 'e8', title: 'Core Fundamentals — Mechanical', role: 'core', minutes: 45, questionCount: 30, difficulty: 'Medium', attempts: 208, avgScore: 63, questions: SAMPLE },
+  { id: 'e8', title: 'Core Fundamentals: Mechanical', role: 'core', minutes: 45, questionCount: 30, difficulty: 'Medium', attempts: 208, avgScore: 63, questions: SAMPLE },
+  /*
+   * The first paper made of questions we actually wrote rather than placeholder
+   * samples. Short on purpose: two questions modelled on Heard on the Street's
+   * first chapter, both chosen because the *reasoning* is the point and the
+   * arithmetic is nothing.
+   */
+  {
+    id: 'e-hots-1',
+    title: 'Heard on the Street: Chapter 1 Warm-up',
+    role: 'quant',
+    minutes: 10,
+    questionCount: HOTS_QUESTIONS.length,
+    difficulty: 'Medium',
+    attempts: 0,
+    avgScore: 0,
+    questions: HOTS_QUESTIONS,
+  },
 ]
 
 export type Friend = {

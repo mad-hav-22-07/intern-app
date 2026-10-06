@@ -56,7 +56,7 @@ export const RESUME_REVIEW = {
     {
       severity: 'medium' as const,
       title: 'Lead with the outcome, not the tool',
-      body: 'Three bullets open with "Used React to...". Interviewers scan the first four words — put the result there and the stack at the end.',
+      body: 'Three bullets open with "Used React to...". Interviewers scan the first four words, so put the result there and the stack at the end.',
     },
     {
       severity: 'low' as const,
@@ -64,15 +64,4 @@ export const RESUME_REVIEW = {
       body: 'Six lines of coursework buys you nothing for an SDE shortlist. Reclaim the space for a third project.',
     },
   ],
-}
-
-export const STREAK = {
-  current: 12,
-  best: 24,
-  /** last 28 days, 0 = missed, 1..3 = intensity */
-  history: [
-    2, 1, 0, 3, 2, 2, 1, 0, 0, 1, 3, 3, 2, 1, 2, 0, 1, 2, 3, 3, 2, 2, 1, 3, 3, 2, 3, 2,
-  ],
-  todayDone: 2,
-  todayGoal: 3,
 }
